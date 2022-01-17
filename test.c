@@ -16,13 +16,19 @@ static int from_lineno = 0;
 static void *
 allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
 {
+#ifndef _POSIX_C_SOURCE
+# define _POSIX_C_SOURCE 0
+#endif
+#if _POSIX_C_SOURCE >= 200112L
 	void *ptr;
 	int err;
+#endif
 	(void) ctx;
 	if (num > SIZE_MAX / size) {
 		errno = ENOMEM;
 		return NULL;
 	}
+#if _POSIX_C_SOURCE >= 200112L
 	if (alignment < sizeof(void *))
 		alignment = sizeof(void *);
 	err = posix_memalign(&ptr, alignment, num * size);
@@ -32,6 +38,12 @@ allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
 	} else {
 		return ptr;
 	}
+#elif defined(_ISOC11_SOURCE)
+	return aligned_alloc(alignment, num * size);
+#else
+	(void) alignment;
+	return malloc(num * size);
+#endif
 }
 
 static void
@@ -660,7 +672,7 @@ check_hash(const char *pwd_, size_t pwdlen, const char *hash, struct libar2_cont
 	from_lineno = lineno;
 	errno = 0;
 
-	stpcpy(pwd, pwd_);
+	strcpy(pwd, pwd_);
 	plen = libar2_decode_params(hash, &params, &sbuf, ctx);
 	assert(!libar2_validate_params(&params, NULL));
 	assert(!libar2_hash(output, pwd, pwdlen, &params, ctx));
