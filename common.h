@@ -54,7 +54,7 @@
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 
 
-#define ERASE(PTR, N) libar2_earse(PTR, N)
+#define ERASE(PTR, N) libar2_erase(PTR, N)
 #define ERASE_ARRAY(ARR) ERASE(ARR, sizeof(ARR))
 #define ERASE_STRUCT(S) ERASE(&(S), sizeof(S))
 

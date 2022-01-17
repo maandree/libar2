@@ -316,9 +316,9 @@ struct libar2_context {
 	/**
 	 * Memory deallocation function
 	 * 
-	 * The application may which to earse the memory before
+	 * The application may which to erase the memory before
 	 * deallocating it; this is not done by the library.
-	 * This can be done using `libar2_earse`;
+	 * This can be done using `libar2_erase`;
 	 * 
 	 * Example implementation:
 	 * 
@@ -572,12 +572,12 @@ size_t libar2_decode_base64(const char *str, void *data, size_t *lenp);
 enum libar2_parameter_error libar2_validate_params(const struct libar2_argon2_parameters *params, const char **errmsgp);
 
 /**
- * Securily earse memory
+ * Securily erase memory
  * 
  * @param  mem   The memory to erase
  * @param  size  The number of bytes to erase
  */
-void libar2_earse(volatile void *mem, size_t size);
+void libar2_erase(volatile void *mem, size_t size);
 
 /**
  * Hash a message

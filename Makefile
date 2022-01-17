@@ -21,7 +21,7 @@ OBJ =\
 	libar2_decode_params.o\
 	libar2_encode_base64.o\
 	libar2_encode_params.o\
-	libar2_earse.o\
+	libar2_erase.o\
 	libar2_hash.o\
 	libar2_latest_argon2_version.o\
 	libar2_string_to_type.o\
