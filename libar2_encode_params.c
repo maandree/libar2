@@ -8,12 +8,12 @@ libar2_encode_params(char *buf, const struct libar2_argon2_parameters *params)
 	size_t off;
 
 #define FMT_AND_ARGS\
-	"$%s$v=%i$m=%ju,t=%ju,p=%ju$",\
+	"$%s$v=%i$m=%lu,t=%lu,p=%lu$",\
 	libar2_type_to_string(params->type, LIBAR2_LOWER_CASE),\
 	(int)params->version,\
-	(uintmax_t)params->m_cost,\
-	(uintmax_t)params->t_cost,\
-	(uintmax_t)params->lanes
+	(unsigned long int)params->m_cost,\
+	(unsigned long int)params->t_cost,\
+	(unsigned long int)params->lanes
 
 	if (buf) {
 		off = (size_t)sprintf(buf, FMT_AND_ARGS);

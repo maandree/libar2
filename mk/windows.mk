@@ -1,4 +1,4 @@
 LIBEXT      = dll
-LIBFLAGS    = -mdll
+LIBFLAGS    = -shared
 LIBMAJOREXT = $(LIB_MAJOR).$(LIBEXT)
 LIBMINOREXT = $(LIB_VERSION).$(LIBEXT)

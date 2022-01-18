@@ -39,9 +39,10 @@ libar2_erase(volatile void *mem_, size_t size)
 
 /* Typo in version 1.0 */
 #if defined(__GNUC__)
+LIBAR2_PUBLIC__
 extern __typeof(libar2_erase) libar2_earse __attribute__((__weak__, __alias__("libar2_erase")));
 #else
-void libar2_earse(volatile void *mem, size_t size);
+LIBAR2_PUBLIC__ void libar2_earse(volatile void *mem, size_t size);
 void
 libar2_earse(volatile void *mem, size_t size)
 {
