@@ -9,6 +9,7 @@
 # if defined(__GNUC__)
 __attribute__((visibility("hidden")))
 # endif
+extern void *(*const volatile libar2_internal_explicit_memset__)(void *, int, size_t);
 void *(*const volatile libar2_internal_explicit_memset__)(void *, int, size_t) = &memset;
 #endif
 

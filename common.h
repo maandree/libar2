@@ -62,3 +62,8 @@
 struct block {
 	uint_least64_t w[1024 / (64 / 8)];
 };
+
+
+#if defined(__clang__)
+# pragma clang diagnostic ignored "-Wc++98-compat"
+#endif

@@ -11,7 +11,7 @@ libar2_validate_params(const struct libar2_argon2_parameters *params, const char
 			*errmsgp = ERRMESG;\
 		return ENUM;\
 	}
-	LIBAR2_LIST_PARAMETER_ERRORS(LIBAR2_X__, params);
+	LIBAR2_LIST_PARAMETER_ERRORS(LIBAR2_X__, params)
 #undef LIBAR2_X__
 
 	if (errmsgp)

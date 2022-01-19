@@ -5,6 +5,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if defined(__clang__)
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wpadded"
+#endif
+
 /* for internal use { */
 
 #ifndef LIBAR2_PUBLIC__
@@ -642,5 +647,9 @@ void libar2_erase(volatile void *mem, size_t size);
  */
 LIBAR2_PUBLIC__
 int libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameters *params, struct libar2_context *ctx);
+
+#if defined(__clang__)
+# pragma clang diagnostic pop
+#endif
 
 #endif

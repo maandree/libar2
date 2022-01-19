@@ -158,40 +158,40 @@ check_libar2_type_to_string(void)
 	assert_streq(libar2_type_to_string(LIBAR2_ARGON2DS, LIBAR2_UPPER_CASE), "ARGON2DS");
 	assert(errno == 0);
 
-	assert_streq(libar2_type_to_string(LIBAR2_ARGON2I, -1), NULL);
+	assert_streq(libar2_type_to_string(LIBAR2_ARGON2I, (enum libar2_casing)-1), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
-	assert_streq(libar2_type_to_string(LIBAR2_ARGON2I, 3), NULL);
-	assert(errno == EINVAL);
-	errno = 0;
-
-	assert_streq(libar2_type_to_string(3, LIBAR2_LOWER_CASE), NULL);
-	assert(errno == EINVAL);
-	errno = 0;
-	assert_streq(libar2_type_to_string(3, LIBAR2_TITLE_CASE), NULL);
-	assert(errno == EINVAL);
-	errno = 0;
-	assert_streq(libar2_type_to_string(3, LIBAR2_UPPER_CASE), NULL);
+	assert_streq(libar2_type_to_string(LIBAR2_ARGON2I, (enum libar2_casing)3), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 
-	assert_streq(libar2_type_to_string(-1, LIBAR2_LOWER_CASE), NULL);
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)3, LIBAR2_LOWER_CASE), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
-	assert_streq(libar2_type_to_string(-1, LIBAR2_TITLE_CASE), NULL);
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)3, LIBAR2_TITLE_CASE), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
-	assert_streq(libar2_type_to_string(-1, LIBAR2_UPPER_CASE), NULL);
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)3, LIBAR2_UPPER_CASE), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 
-	assert_streq(libar2_type_to_string(5, LIBAR2_LOWER_CASE), NULL);
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)-1, LIBAR2_LOWER_CASE), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
-	assert_streq(libar2_type_to_string(5, LIBAR2_TITLE_CASE), NULL);
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)-1, LIBAR2_TITLE_CASE), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
-	assert_streq(libar2_type_to_string(5, LIBAR2_UPPER_CASE), NULL);
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)-1, LIBAR2_UPPER_CASE), NULL);
+	assert(errno == EINVAL);
+	errno = 0;
+
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)5, LIBAR2_LOWER_CASE), NULL);
+	assert(errno == EINVAL);
+	errno = 0;
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)5, LIBAR2_TITLE_CASE), NULL);
+	assert(errno == EINVAL);
+	errno = 0;
+	assert_streq(libar2_type_to_string((enum libar2_argon2_type)5, LIBAR2_UPPER_CASE), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 }
@@ -295,15 +295,15 @@ check_libar2_version_to_string(void)
 	assert_streq(libar2_version_to_string(0x13), "13");
 	assert(errno == 0);
 
-	assert_streq(libar2_version_to_string(0x11), NULL);
+	assert_streq(libar2_version_to_string((enum libar2_argon2_version)0x11), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 
-	assert_streq(libar2_version_to_string(0x12), NULL);
+	assert_streq(libar2_version_to_string((enum libar2_argon2_version)0x12), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 
-	assert_streq(libar2_version_to_string(0), NULL);
+	assert_streq(libar2_version_to_string((enum libar2_argon2_version)0), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 }
@@ -326,15 +326,15 @@ check_libar2_version_to_string_proper(void)
 	assert_streq(libar2_version_to_string_proper(0x13), "1.3");
 	assert(errno == 0);
 
-	assert_streq(libar2_version_to_string_proper(0x11), NULL);
+	assert_streq(libar2_version_to_string_proper((enum libar2_argon2_version)0x11), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 
-	assert_streq(libar2_version_to_string_proper(0x12), NULL);
+	assert_streq(libar2_version_to_string_proper((enum libar2_argon2_version)0x12), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 
-	assert_streq(libar2_version_to_string_proper(0), NULL);
+	assert_streq(libar2_version_to_string_proper((enum libar2_argon2_version)0), NULL);
 	assert(errno == EINVAL);
 	errno = 0;
 }
@@ -624,7 +624,7 @@ check_libar2_validate_params(void)
 	assert(errno == 0);
 	params.lanes = 1;
 
-	params.type = -1;
+	params.type = (enum libar2_argon2_type)-1;
 	assert(libar2_validate_params(&params, &errmsg) == LIBAR2_INVALID_TYPE);
 	assert_streq(errmsg, "type parameter is invalid");
 	assert(errno == 0);
@@ -633,7 +633,7 @@ check_libar2_validate_params(void)
 	assert(errno == 0);
 	params.type = 0;
 
-	params.type = 3;
+	params.type = (enum libar2_argon2_type)3;
 	assert(libar2_validate_params(&params, &errmsg) == LIBAR2_INVALID_TYPE);
 	assert_streq(errmsg, "type parameter is invalid");
 	assert(errno == 0);
@@ -642,7 +642,7 @@ check_libar2_validate_params(void)
 	assert(errno == 0);
 	params.type = 0;
 
-	params.type = 5;
+	params.type = (enum libar2_argon2_type)5;
 	assert(libar2_validate_params(&params, &errmsg) == LIBAR2_INVALID_TYPE);
 	assert_streq(errmsg, "type parameter is invalid");
 	assert(errno == 0);
@@ -651,14 +651,14 @@ check_libar2_validate_params(void)
 	assert(errno == 0);
 	params.type = 0;
 
-	params.version = 0x11;
+	params.version = (enum libar2_argon2_version)0x11;
 	assert(libar2_validate_params(&params, &errmsg) == LIBAR2_INVALID_VERSION);
 	assert_streq(errmsg, "version parameter is invalid");
 	assert(errno == 0);
 	errmsg = NULL;
 	assert(libar2_validate_params(&params, NULL) == LIBAR2_INVALID_VERSION);
 	assert(errno == 0);
-	params.type = 0x10;
+	params.version = 0x10;
 }
 
 
@@ -691,7 +691,7 @@ static void
 check_libar2_hash(void)
 {
 #define CHECK(PWD, HASH)\
-	check_hash(MEM(PWD), HASH, &ctx_st, __LINE__);
+	check_hash(MEM(PWD), HASH, &ctx_st, __LINE__)
 
 	CHECK("\x00", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$Eyx1BxGazSuPQoy7osaQuo20Dw9VI97dYUOgcC3cMgw");
 	CHECK("test", "$argon2i$v=19$m=4096,t=3,p=1$fn5/f35+f38$9tqKA4WMEsSAOEUwatjxvJLSqL1j0GQkgbsfnpresDw");
