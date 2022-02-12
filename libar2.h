@@ -456,7 +456,7 @@ struct libar2_context {
 /**
  * The latest versions of Argon2 that is supported
  */
-extern enum libar2_argon2_version libar2_latest_argon2_version;
+extern const enum libar2_argon2_version libar2_latest_argon2_version;
 
 
 /**

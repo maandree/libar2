@@ -2,4 +2,4 @@
 #include "common.h"
 
 
-enum libar2_argon2_version libar2_latest_argon2_version = LIBAR2_ARGON2_VERSION_13;
+const enum libar2_argon2_version libar2_latest_argon2_version = LIBAR2_ARGON2_VERSION_13;
