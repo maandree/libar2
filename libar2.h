@@ -543,7 +543,8 @@ size_t libar2_encode_params(char *buf, const struct libar2_argon2_parameters *pa
  * to a length divible by 4
  * 
  * @param   buf   Output buffer, or `NULL`
- * @param   data  The data to encode
+ * @param   data  The data to encode, may be
+ *                `NULL` if `buf` is `NULL`
  * @param   len   The number of bytes in `data`
  * @return        The number of bytes required for `buf`,
  *                including the NUL byte added to the end
