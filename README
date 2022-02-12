@@ -1,0 +1,14 @@
+NAME
+	libar2 - Library for the Argon2-family of hashing functions
+
+DESCRIPTION
+	libar2 is a C library that implements the family of Argon2
+	key derivation function, including Argon2d, Argon2i, and
+	Argon2id, as well as Argon2ds which was not part of the
+	submission to the Password Hashing Competition of 2013,
+	which Argon2 won in 2015. As a key derivation function,
+	Argon2 is well-suited for cryptographically hashing
+	(one-way encrypting) passwords.
+
+SEE ALSO
+	crypt(3)

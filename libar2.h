@@ -12,6 +12,12 @@
 
 /* for internal use { */
 
+#if defined(__GNUC__)
+# define LIBAR2_NONNULL__(...) __attribute__((nonnull(__VA_ARGS__)))
+#else
+# define LIBAR2_NONNULL__(...)
+#endif
+
 #ifndef LIBAR2_PUBLIC__
 # if defined(_MSC_VER)
 #  define LIBAR2_PUBLIC__ __declspec(dllexport)
@@ -119,7 +125,7 @@ enum libar2_argon2_type {
 	/**
 	 * Secret-dependent hashing
 	 * 
-	 * Only for side-channel-free environment!
+	 * Only for side-channel-free environments!
 	 */
 	LIBAR2_ARGON2D = 0,
 
@@ -134,7 +140,7 @@ enum libar2_argon2_type {
 	/**
 	 * Hybrid construction
 	 * 
-	 * OK against side channels and better with
+	 * OK against side-channels and better with
 	 * respect to tradeoff attacks
 	 */
 	LIBAR2_ARGON2ID = 2,
@@ -454,7 +460,7 @@ struct libar2_context {
 
 
 /**
- * The latest versions of Argon2 that is supported
+ * The latest version of Argon2 that is supported
  */
 extern const enum libar2_argon2_version libar2_latest_argon2_version;
 
@@ -477,7 +483,7 @@ const char *libar2_type_to_string(enum libar2_argon2_type type, enum libar2_casi
  * @param   typep  Output parameter for the primitive type
  * @return         0 on success, -1 (with `errno` set to EINVAL) if `str` is invalid
  */
-LIBAR2_PUBLIC__
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1, 2)
 int libar2_string_to_type(const char *str, enum libar2_argon2_type *typep);
 
 /**
@@ -509,7 +515,7 @@ const char *libar2_version_to_string_proper(enum libar2_argon2_version version);
  * @param   versionp  Output parameter for the version number value
  * @return            0 on success, -1 (with `errno` set to EINVAL) if `str` is invalid
  */
-LIBAR2_PUBLIC__
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1, 2)
 int libar2_string_to_version(const char *str, enum libar2_argon2_version *versionp);
 
 /**
@@ -527,7 +533,7 @@ int libar2_string_to_version(const char *str, enum libar2_argon2_version *versio
  * @return          The number of bytes required for `buf`,
  *                  including the NUL byte added to the end
  */
-LIBAR2_PUBLIC__
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(2)
 size_t libar2_encode_params(char *buf, const struct libar2_argon2_parameters *params);
 
 /**
@@ -578,7 +584,7 @@ size_t libar2_encode_base64(char *buf, const void *data, size_t len);
  *                  a hash, and not just parameters, `&str[return]` will
  *                  point to the hash
  */
-LIBAR2_PUBLIC__
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1, 2, 3, 4)
 size_t libar2_decode_params(const char *str, struct libar2_argon2_parameters *params, char **bufp, struct libar2_context *ctx);
 
 /**
@@ -589,7 +595,7 @@ size_t libar2_decode_params(const char *str, struct libar2_argon2_parameters *pa
  * @param   lenp  Output parameter for the length of the decoded data
  * @return        The number of bytes read
  */
-LIBAR2_PUBLIC__
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1, 3)
 size_t libar2_decode_base64(const char *str, void *data, size_t *lenp);
 
 /**
@@ -599,7 +605,7 @@ size_t libar2_decode_base64(const char *str, void *data, size_t *lenp);
  * @param   errmsgp  Output parameter for the error message, or `null`
  * @return           The first detected error, or LIBAR2_OK (0) if none
  */
-LIBAR2_PUBLIC__
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1)
 enum libar2_parameter_error libar2_validate_params(const struct libar2_argon2_parameters *params, const char **errmsgp);
 
 /**
@@ -629,7 +635,7 @@ void libar2_erase(volatile void *mem, size_t size);
  *      }
  * 
  * It is preferable this check is done by the process that
- * knowns the correct password hash, and that the tryed
+ * knowns the correct password hash, and that the tried
  * password is hashed before it is sent to that process
  * 
  * Note that on failure, the function will not necessarily
@@ -645,7 +651,7 @@ void libar2_erase(volatile void *mem, size_t size);
  * @param   ctx     Library settings
  * @return          0 on success, -1 on failure
  */
-LIBAR2_PUBLIC__
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1, 4, 5)
 int libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameters *params, struct libar2_context *ctx);
 
 #if defined(__clang__)

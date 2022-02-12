@@ -1,0 +1,66 @@
+.TH LIBAR2_VERSION_TO_STRING 7 LIBAR2
+.SH NAME
+libar2_version_to_string - Convert an Argon2 version number to a string without a dot
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_argon2_version {
+    LIBAR2_ARGON2_VERSION_10 = 0x10,
+    LIBAR2_ARGON2_VERSION_13 = 0x13
+};
+
+const char *libar2_version_to_string(enum libar2_argon2_version \fIversion\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_version_to_string ()
+function returns a statically allocated string that
+represents the value of the
+.I version
+parameter, which shall represent a version of the
+Argon2 family. The returned string will not contain
+a dot
+.RB ( . ),
+meaning it will be formatted in hexadecimal without
+a base-prefix; for example \(dq13\(dq for
+.IR LIBAR2_ARGON2_VERSION_13 .
+
+.SH RETURN VALUES
+The
+.BR libar2_version_to_string ()
+function returns a statically allocated string
+as described in the
+.B DESCRIPTION
+section upon successful completion. On error,
+.I NULL
+is returned and
+.I errno
+is set to describe the error.
+
+.SH ERRORS
+The
+.BR libar2_version_to_string ()
+function will fail if:
+.TP
+.B EINVAL
+.I version
+is not a supported version of Argon2.
+
+.SH NOTES
+The Argon2 hash string encodes the value of
+.I version
+in decimal, not hexadecimal, meaning that the
+.BR libar2_version_to_string ()
+function cannot be used to create the hash string.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_version_to_string_proper (3),
+.BR libar2_string_to_version (3),
+.BR libar2_latest_argon2_version (3)

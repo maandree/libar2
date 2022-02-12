@@ -1,0 +1,36 @@
+.TH LIBAR2_LATEST_ARGON2_VERSION 7 LIBAR2
+.SH NAME
+libar2_latest_argon2_version - Highest support version of Argon2
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_argon2_version {
+    LIBAR2_ARGON2_VERSION_10 = 0x10,
+    LIBAR2_ARGON2_VERSION_13 = 0x13
+};
+
+extern const enum libar2_argon2_version libar2_latest_argon2_version;
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.B libar2_latest_argon2_version
+global, constant variable is set to the latest version of Argon2
+that is supported by the version of the libar2 library linked by
+the application. In the current version of libar2,
+.B libar2_latest_argon2_version
+is set to
+.IR LIBAR2_ARGON2_VERSION_13 ,
+which represents version 1.3, also called version 13, of the
+Argon2 family.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_version_to_string (3),
+.BR libar2_version_to_string_proper (3),
+.BR libar2_string_to_version (3)

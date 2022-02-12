@@ -1,0 +1,79 @@
+.TH LIBAR2_STRING_TO_TYPE 7 LIBAR2
+.SH NAME
+libar2_string_to_type - Convert a string to an Argon2 primitive type value
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_argon2_type {
+        LIBAR2_ARGON2D = 0,
+        LIBAR2_ARGON2I = 1,
+        LIBAR2_ARGON2ID = 2,
+        LIBAR2_ARGON2DS = 4
+};
+
+int libar2_string_to_type(const char *\fIstr\fP, enum libar2_argon2_type *\fItypep\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_string_to_type ()
+function converts a string, provided via the
+.I str
+parameter, to a Argon2 primitive type and stores
+the constant that represents that type in
+.IR *typep .
+.PP
+The strings \(dqargon2d\(dq, \(dqargon2i\(dq,
+\(dqargon2id\(dq, and \(dqargon2ds\(dq are the
+currently recognised strings, and are converted to
+.IR LIBAR2_ARGON2D ,
+.IR LIBAR2_ARGON2I ,
+.IR LIBAR2_ARGON2ID ,
+and.
+.IR LIBAR2_ARGON2DS ,
+respectively.
+.PP
+The
+.BR libar2_string_to_type ()
+is case-insensitive and will recognise the
+dollar-sign
+.RB ( $ )
+character, or a NUL byte, as the end of the
+string.
+.PP
+Neither argument may be
+.IR NULL .
+
+.SH RETURN VALUES
+The
+.BR libar2_string_to_type ()
+function returns 0, and sets
+.I *typep
+to the value that
+.I str
+represents, upon successful completion.
+On error, -1 is returned and
+.I errno
+is set to describe the error.
+
+.SH ERRORS
+The
+.BR libar2_string_to_type ()
+function will fail if:
+.TP
+.B EINVAL
+.I str
+does not represent a recognised Argon2 function
+or is not formatted according to the specifications
+in the
+.B DESCRIPTION
+section.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_type_to_string (3)

@@ -1,0 +1,82 @@
+.TH LIBAR2_TYPE_TO_STRING 7 LIBAR2
+.SH NAME
+libar2_type_to_string - Convert an Argon2 primitive type value to a string
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_argon2_type {
+        LIBAR2_ARGON2D = 0,
+        LIBAR2_ARGON2I = 1,
+        LIBAR2_ARGON2ID = 2,
+        LIBAR2_ARGON2DS = 4
+};
+
+enum libar2_casing {
+        LIBAR2_LOWER_CASE,
+        LIBAR2_TITLE_CASE,
+        LIBAR2_UPPER_CASE
+};
+
+const char *libar2_type_to_string(enum libar2_argon2_type \fItype\fP, enum libar2_casing \fIcasing\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_type_to_string ()
+function returns a statically allocated string that
+represents the value of the
+.I type
+parameter, which shall represent a primitive type
+of Argon2 (that is, Argon2d, Argon2i, Argon2id, or
+Argon2ds), using the casing specified by the
+.I casing
+parameter.
+.PP
+If the
+.I casing
+parameter is
+.IR LIBAR2_LOWER_CASE ,
+the returned string will be in all lower case,
+that is, for example \(dqargon2d\(dq.
+If the
+.I casing
+parameter is
+.IR LIBAR2_TITLE_CASE ,
+the first character returned string will be in
+upper case, and the rest of the string will be
+in lower case, that is, for example \(dqArgon2d\(dq.
+If the
+.I casing
+parameter is
+.IR LIBAR2_UPPER_CASE ,
+the returned string will be in all upper case,
+that is, for example \(dqARGON2D\(dq.
+
+.SH RETURN VALUES
+The
+.BR libar2_type_to_string ()
+function returns a statically allocated string
+as described in the
+.B DESCRIPTION
+section upon successful completion. On error,
+.I NULL
+is returned and
+.I errno
+is set to describe the error.
+
+.SH ERRORS
+The
+.BR libar2_type_to_string ()
+function will fail if:
+.TP
+.B EINVAL
+Either argument is invalid.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_string_to_type (3)

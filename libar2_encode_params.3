@@ -1,0 +1,163 @@
+.TH LIBAR2_ENCODE_PARAMS 7 LIBAR2
+.SH NAME
+libar2_encode_params - Encode Argon2 hashing parameters
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_argon2_version {
+    LIBAR2_ARGON2_VERSION_10 = 0x10,
+    LIBAR2_ARGON2_VERSION_13 = 0x13
+};
+
+enum libar2_argon2_type {
+    LIBAR2_ARGON2D = 0,
+    LIBAR2_ARGON2I = 1,
+    LIBAR2_ARGON2ID = 2,
+    LIBAR2_ARGON2DS = 4
+};
+
+struct libar2_argon2_parameters {
+    enum libar2_argon2_type \fItype\fP;
+    enum libar2_argon2_version \fIversion\fP;
+    uint_least32_t \fIt_cost\fP;
+    uint_least32_t \fIm_cost\fP;
+    uint_least32_t \fIlanes\fP;
+    unsigned char *\fIsalt\fP;
+    size_t \fIsaltlen\fP;
+    unsigned char *\fIkey\fP;
+    size_t \fIkeylen\fP;
+    unsigned char *\fIad\fP;
+    size_t \fIadlen\fP;
+    size_t \fIhashlen\fP;
+};
+
+size_t libar2_encode_params(char *\fIbuf\fP, const struct libar2_argon2_parameters *\fIparams\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_encode_params ()
+function encodes the Argon2 hashing parameters
+provided via the
+.I param
+parameter, as a string, in a standardised format,
+and stores the string in
+.I buf
+(unless
+.I buf
+is
+.IR NULL )
+and return the number of bytes that was (or would
+have been) written to
+.IR buf .
+.PP
+It is recommended that the
+.BR libar2_encode_params ()
+function is called twice: first with
+.I buf
+set to
+.IR NULL ,
+to get how large
+.I buf
+shall be, and then (with the same, unmodified,
+.IR params
+and) with a
+.I buf
+with an allocation size of at least the number
+of bytes that was returned by the function in
+the previous call to it.
+.PP
+The created string will have the following format:
+
+.RS
+.B \(dq$%s$v=%i$m=%lu,t=%lu,p=%lu$%s$\(dq,
+.RI < type >\fB,\fP
+.RI < version >\fB,\fP
+.RI < "memory cost" >\fB,\fP
+.RI < "time cost" >\fB,\fP
+.RI < "parallelism" >\fB,\fP
+.RI < "base64 encoded salt" >
+.RE
+
+The string does not encode the \(dqsecret\(dq
+(pepper), \(dqassociated data\(dq, or the
+\(dqtag\(dq (message hash) length. This string
+is the Argon2 hash string minus the \(dqtag\(dq
+(the hash of the message (the password)), which
+is encoded in base64 and appended to the string
+formatted by this function. For information
+about the expected contents of the
+.I params
+argument, see 
+.BR libar2_hash (3).
+.PP
+.I params
+may not be
+.IR NULL .
+
+.SH RETURN VALUES
+The
+.BR libar2_encode_params ()
+function returns the number of bytes required
+to encode the parameter string, plus one extra
+byte for the NUL byte that is added to the to
+terminate the string; that is, the number of
+bytes written to
+.I buf
+or the required allocation size of
+.IR buf .
+If
+.I buf
+is
+.RI non- NULL ,
+a string will be stored in it according to the
+specifications in the
+.B DESCRIPTION
+section.
+
+.SH ERRORS
+The
+.BR libar2_encode_params ()
+function cannot fail.
+
+.SH EXAMPLES
+The following example demonstrates how to
+encode the hashing parameters into a dynamically
+allocated string.
+.PP
+.nf
+#include <libar2.h>
+#include <stdlib.h>
+
+static char *
+encode_params(const struct libar2_argon2_parameters *params)
+{
+    size_t n = libar2_encode_params(NULL, params);
+    char *buf = malloc(n);
+    if (!buf)
+        return NULL;
+    if (libar2_encode_params(buf, params) > n)
+        abort();
+    return buf;
+}
+.fi
+
+.SH NOTES
+The
+.BR libar2_encode_params ()
+function till note validate its input.
+This has to be done using the
+.BR libar2_validate_params (3)
+function.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_validate_params (3),
+.BR libar2_decode_params (3),
+.BR libar2_encode_base64 (3),
+.BR libar2_hash (3)

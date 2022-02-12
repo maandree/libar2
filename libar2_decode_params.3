@@ -1,0 +1,194 @@
+.TH LIBAR2_DECODE_PARAMS 7 LIBAR2
+.SH NAME
+libar2_decode_params - Decode Argon2 hashing parameters
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_argon2_version {
+    LIBAR2_ARGON2_VERSION_10 = 0x10,
+    LIBAR2_ARGON2_VERSION_13 = 0x13
+};
+
+enum libar2_argon2_type {
+    LIBAR2_ARGON2D = 0,
+    LIBAR2_ARGON2I = 1,
+    LIBAR2_ARGON2ID = 2,
+    LIBAR2_ARGON2DS = 4
+};
+
+struct libar2_argon2_parameters {
+    enum libar2_argon2_type \fItype\fP;
+    enum libar2_argon2_version \fIversion\fP;
+    uint_least32_t \fIt_cost\fP;
+    uint_least32_t \fIm_cost\fP;
+    uint_least32_t \fIlanes\fP;
+    unsigned char *\fIsalt\fP;
+    size_t \fIsaltlen\fP;
+    unsigned char *\fIkey\fP;
+    size_t \fIkeylen\fP;
+    unsigned char *\fIad\fP;
+    size_t \fIadlen\fP;
+    size_t \fIhashlen\fP;
+};
+
+struct libar2_context {
+    /* Parts of this struct that are not relevant to \fBlibar2_decode_params\fP() have been omitted. */
+    void *\fIuser_data\fP;
+    void *(*\fIallocate\fP)(size_t \fInum\fP, size_t \fIsize\fP, size_t \fIalignment\fP, struct libar2_context *\fIctx\fP);
+    void (*\fIdeallocate\fP)(void *\fIptr\fP, struct libar2_context *\fIctx\fP);
+};
+
+size_t libar2_decode_params(const char *\fIstr\fP, const struct libar2_argon2_parameters *\fIparams\fP,
+                            char **\fIbuf\fP, truct libar2_context *\fIctx\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_decode_params ()
+function decodes a string, provided via the
+.I str
+parameter, that encodes Argon2 hashing parameters,
+and stores the decoded parameters in
+.I param
+and return the number of bytes read from, up to
+but exclude the first byte that was determine not
+to be part of the encoded data. For more
+information about
+.IR param ,
+see
+.BR libar2_hash (3).
+.PP
+The input string,
+.IR str ,
+does not encode the \(dqsecret\(dq (pepper) or
+\(dqassociated data\(dq, therefore these will
+be set to zero-length. The tag (message/password
+hash) length will be inferred from the portion
+of the input string (specifically from the number
+of bytes that make up a valid base64 string) after
+the data that the
+.BR libar2_encode_params (3)
+function encodes,
+.B however
+the number of bytes read from this part of the
+string will not be included in the functions
+return value (the return value marks the end of
+the parameter string, not the hash string which
+also includes the tag).
+.PP
+The
+.BR libar2_decode_params ()
+function may use the
+.I *ctx->allocate
+function to dynamically allocate memory
+and the
+.I *ctx->deallocate
+function to deallocate memory it has
+allocated with
+.IR *ctx->allocate .
+The function may call
+.I *ctx->allocate
+once, and on failure if
+.I *ctx->allocate
+was called,
+.I *ctx->deallocate
+once. If
+.I *ctx->allocatew
+was called, but not
+.IR *ctx->deallocate ,
+the memory allocated with
+.I *ctx->allocate
+will be stored in
+.I *bufp
+and may be deallocated by the user with
+.I *ctx->deallocate
+once the result stored in
+.I params
+is not longer needed.
+See more information about
+.I ctx->allocate
+and
+.IR ctx->deallocate ,
+as well as
+.IR ctx->user_data ,
+see
+.BR libar2_hash (3).
+.PP
+None of the arguments may be
+.IR NULL .
+.PP
+Upon successful completion, if
+.I str
+contains the a tag,
+.IR &str[n] ,
+where
+.I n
+is the return value of the function,
+will point to the beginning of the tag.
+
+.SH RETURN VALUES
+The
+.BR libar2_decode_params ()
+returns the number of bytes in
+.I str
+that make up the decoded parameter, including
+the final dollar-sign
+.RB ( $ ),
+but excluding the tag, if any, at the end of
+the string which is used to infer the tag length,
+and stores the decoded parameters in
+.IR params ,
+and potentially dynamically allocated data in
+.IR *bufp ,
+upon successful completion
+On error, 0 is returned (not a valid return
+value on success completion) and
+.I errno
+is set to describe the error.
+
+.SH ERRORS
+The
+.BR libar2_decode_params ()
+function will fail if:
+.TP
+.B EINVAL
+.I str
+is improperly formatted or contains
+an unrecognised primitive type.
+.TP
+.B ERANGE
+.I str
+contains an integer that is too large to
+be represented by the field in
+.I params
+that it shall be stored in.
+.PP
+The
+.BR libar2_decode_params ()
+function will also fail if the
+.I *ctx->allocate
+function fails, and will, in that case,
+not modify
+.IR errno .
+
+.SH NOTES
+The encoded parameters will not be
+validate by the
+.BR libar2_decode_params ()
+function beyond what is needed to ensure that
+the parameters can be accurately parsed and
+represented. This has to be done using the
+.BR libar2_validate_params (3)
+function.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_validate_params (3),
+.BR libar2_encode_params (3),
+.BR libar2_decode_base64 (3),
+.BR libar2_hash (3)

@@ -1,0 +1,51 @@
+.TH LIBAR2_ERASE 7 LIBAR2
+.SH NAME
+libar2_erase - Securily erase memory
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+void libar2_erase(volatile void *\fImem\fP, size_t \fIsize\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_erase ()
+function writes the number of bytes
+specified in the
+.I size
+parameter to the buffer specified in the
+.I mem
+parameter. Unlike functions like
+.BR bzero (3)
+and
+.BR memset (3),
+the compiler should not be able to optimise
+away a call to the
+.BR libar2_erase ()
+function, even if link-time optimisation
+is enabled, and is thus recommended for
+wiping passwords from memory after they
+have been hashed.
+.PP
+.I mem
+may only be
+.I NULL
+if
+.I size
+is 0.
+
+.SH RETURN VALUES
+None.
+
+.SH ERRORS
+The
+.BR libar2_erase ()
+function cannot fail.
+
+.SH SEE ALSO
+.BR libar2 (7)

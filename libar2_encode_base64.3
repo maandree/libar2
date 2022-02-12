@@ -1,0 +1,103 @@
+.TH LIBAR2_ENCODE_BASE64 7 LIBAR2
+.SH NAME
+libar2_encode_base64 - Encode data to base64
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+size_t libar2_encode_base64(char *\fIbuf\fP, const void *\fIdata\fP, size_t \fIlen\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_encode_base64 ()
+function encodes some binary data, provided
+via the
+.I data
+parameter, into base64, and stores the base64
+encoding in
+.I buf
+(unless
+.I buf
+is
+.IR NULL ).
+The number of bytes from
+.I data
+to encode shall be specified in the
+.I len
+parameter.
+.PP
+The encoding of
+.I data
+will
+.B not
+be padded to a length divisble by 4.
+.PP
+.I data
+may only be
+.I NULL
+if
+.I len
+is 0.
+
+.SH RETURN VALUES
+The
+.BR libar2_encode_base64 ()
+function returns the number of bytes required
+to encode the data to base64, plus one extra
+byte for the NUL byte that is added to the to
+terminate the string; that is, the number of
+bytes written to
+.I buf
+or the required allocation size of
+.IR buf .
+If
+.I buf
+is
+.RI non- NULL ,
+a string will be stored in it according to the
+specifications in the
+.B DESCRIPTION
+section.
+
+.SH ERRORS
+The
+.BR libar2_encode_base64 ()
+function cannot fail.
+
+.SH EXAMPLES
+The following example demonstrates how to
+encode data to base64 and store it in a
+dynamically allocated string.
+.PP
+.nf
+#include <libar2.h>
+#include <stdlib.h>
+
+static char *
+encode_base64(const void *data, size_t len)
+{
+    size_t n = libar2_encode_base64(NULL, data, len);
+    char *buf = malloc(n);
+    if (!buf)
+        return NULL;
+    if (libar2_encode_base64(buf, data, len) > n)
+        abort();
+    return buf;
+}
+.fi
+
+.SH NOTES
+The encoding specified for
+.BR crypt (3)
+is B64, which is similar to, but with significant
+differences from, base64, which is the encoding
+that is standardised for Argon2.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_decode_base64 (3)

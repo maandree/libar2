@@ -1,0 +1,108 @@
+.TH LIBAR2_DECODE_BASE64 7 LIBAR2
+.SH NAME
+libar2_decode_base64 - Decode base64-encoded data
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+size_t libar2_decode_base64(const char *\fIstr\fP, void *\fIdata\fP, size_t *\fIlenp\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_decode_base64 ()
+function decodes some binary data that has
+been encoded with base64. The base64-encoding
+shall be provided via the
+.I str
+parameter, and is decoded into the
+.I data
+parameter
+(unless
+.I data
+is
+.IR NULL ).
+The length of the decoded data, in bytes,
+is stored in
+.IR *lenp .
+.PP
+.I str
+may, but does not have to, be padded, up to
+(or short there of) the next length that is
+divisible by 4, unless the length is already
+divisible by 4, using equals-sign
+.RB ( = )
+characters.
+.PP
+Decoding stops at the first byte in
+.I str
+that cannot be part of a valid base64-encoding.
+.PP
+.I str
+and
+.I lenp
+may not be
+.IR NULL .
+
+.SH RETURN VALUES
+The
+.BR libar2_decode_base64 ()
+function returns the number of bytes
+successfully decoded from
+.I str
+(that is, the number of bytes read (minus
+any byte determined not to be part of the
+encoded data), not the number of bytes
+stored in
+.IR data ),
+and stores the decoded data in
+.I data
+and the length of the data, after it has
+been decoded, in
+.IR *lenp .
+
+.SH ERRORS
+The
+.BR libar2_decode_base64 ()
+function cannot fail.
+
+.SH EXAMPLES
+The following example demonstrates how to
+decode data from base64 and store it in a
+dynamically allocated buffer.
+.PP
+.nf
+#include <libar2.h>
+#include <stdlib.h>
+
+static char *
+decode_base64(const const *str, char **endp, size_t *lenp)
+{
+    size_t len;
+    size_t n = libar2_decode_base64(str, NULL, &len);
+    char *data = len ? malloc(len) : NULL;
+    if (len && !data) {
+        *endp = NULL;
+        return NULL;
+    }
+    if (libar2_decode_base64(str, data, lenp) != n || *lenp != len)
+        abort();
+    *endp = &str[n];
+    return data;
+}
+.fi
+
+.SH NOTES
+The encoding specified for
+.BR crypt (3)
+is B64, which is similar to, but with significant
+differences from, base64, which is the encoding
+that is standardised for Argon2.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_encode_base64 (3)

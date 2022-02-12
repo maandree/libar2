@@ -1,0 +1,78 @@
+.TH LIBAR2_STRING_TO_VERSION 7 LIBAR2
+.SH NAME
+libar2_string_to_version - Convert a string to an Argon2 version value
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_argon2_version {
+    LIBAR2_ARGON2_VERSION_10 = 0x10,
+    LIBAR2_ARGON2_VERSION_13 = 0x13
+};
+
+int libar2_string_to_version(const char *\fIstr\fP, enum libar2_argon2_version *\fIversionp\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_string_to_version ()
+function converts a string, provided via the
+.I str
+parameter, to a version of the Argon2 family and
+stores the constant that represents that version in
+.IR *versionp .
+.PP
+The strings \(dq1.0\(dq and \(dq1.3\(dq, both either
+with or without the dot
+.RB ( . ),
+are the currently recognised strings, and are
+converted to
+.IR LIBAR2_ARGON2_VERSION_10
+and
+.IR LIBAR2_ARGON2_VERSION_13 ,
+respectively.
+.PP
+Neither argument may be
+.IR NULL .
+
+.SH RETURN VALUES
+The
+.BR libar2_string_to_version ()
+function returns 0, and sets
+.I *versionp
+to the value that
+.I str
+represents, upon successful completion.
+On error, -1 is returned and
+.I errno
+is set to describe the error.
+
+.SH ERRORS
+The
+.BR libar2_string_to_version ()
+function will fail if:
+.TP
+.B EINVAL
+.I str
+does not represent a recognised version
+of the Argon2 familly or is not formatted
+according to the specifications in the
+.B DESCRIPTION
+section.
+
+.SH NOTES
+The Argon2 hash string encodes the value of
+.I version
+in decimal, not hexadecimal, meaning that the
+.BR libar2_string_to_version ()
+function cannot be used to decode the hash string.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_version_to_string (3),
+.BR libar2_version_to_string_proper (3),
+.BR libar2_latest_argon2_version (3)

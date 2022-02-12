@@ -1,0 +1,482 @@
+.TH LIBAR2_HASH 7 LIBAR2
+.SH NAME
+libar2_hash - Hash a message with Argon2
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_argon2_version {
+    LIBAR2_ARGON2_VERSION_10 = 0x10,
+    LIBAR2_ARGON2_VERSION_13 = 0x13
+};
+
+enum libar2_argon2_type {
+    LIBAR2_ARGON2D = 0,
+    LIBAR2_ARGON2I = 1,
+    LIBAR2_ARGON2ID = 2,
+    LIBAR2_ARGON2DS = 4
+};
+
+struct libar2_argon2_parameters {
+    enum libar2_argon2_type \fItype\fP;
+    enum libar2_argon2_version \fIversion\fP;
+    uint_least32_t \fIt_cost\fP;
+    uint_least32_t \fIm_cost\fP;
+    uint_least32_t \fIlanes\fP;
+    unsigned char *\fIsalt\fP;
+    size_t \fIsaltlen\fP;
+    unsigned char *\fIkey\fP;
+    size_t \fIkeylen\fP;
+    unsigned char *\fIad\fP;
+    size_t \fIadlen\fP;
+    size_t \fIhashlen\fP;
+};
+
+struct libar2_context {
+    void *\fIuser_data\fP;
+    unsigned char \fIautoerase_message\fP;
+    unsigned char \fIautoerase_secret\fP;
+    unsigned char \fIautoerase_salt\fP;
+    unsigned char \fIautoerase_associated_data\fP;
+    void *(*\fIallocate\fP)(size_t \fInum\fP, size_t \fIsize\fP, size_t \fIalignment\fP, struct libar2_context *\fIctx\fP);
+    void (*\fIdeallocate\fP)(void *\fIptr\fP, struct libar2_context *\fIctx\fP);
+    int (*\fIinit_thread_pool\fP)(size_t \fIdesired\fP, size_t *\fIcreatedp\fP, struct libar2_context *\fIctx\fP);
+    size_t (*\fIget_ready_threads\fP)(size_t *\fIindices\fP, size_t \fIn\fP, struct libar2_context *\fIctx\fP);
+    int (*\fIrun_thread\fP)(size_t \fIindex\fP, void (*\fIfunction\fP)(void *\fIdata\fP), void *\fIdata\fP, struct libar2_context *\fIctx\fP);
+    int (*\fIjoin_thread_pool\fP)(struct libar2_context *\fIctx\fP);
+    int (*\fIdestroy_thread_pool\fP)(struct libar2_context *\fIctx\fP);
+};
+
+int libar2_hash(void *\fIhash\fP, void *\fImsg\fP, size_t \fImsglen\fP, struct libar2_argon2_parameters *\fIparams\fP, struct libar2_context *\fIctx\fP);
+.fi
+.PP
+Link with
+.I -lar2
+.IR -lblake .
+
+.SH DESCRIPTION
+The
+.BR libar2_hash ()
+function calculates an Argon2 hash of the
+message specified via the
+.I msg
+parameter, whose length is specified in the
+.I msglen
+parameter and in bytes, according to the
+hashing parameters specified via the
+.I params
+parameter. The resulting hash is stored,
+in raw, binary format, in
+.IR hash ,
+which must have an allocation size of at least
+the number of bytes specified by
+.IR params->hashlen .
+The
+.I ctx
+parameter is used to provide memory and thread
+management functions to the
+.BR libar2_hash ()
+function as well as details about what memory
+it may erase when it is no longer needed by
+the function.
+.PP
+.I msglen
+may not be equal to, or greater than,
+2 to the power of 32.
+.PP
+Only the
+.I msg
+argument may be
+.IR NULL ,
+.B but
+only if
+.I msglen
+is 0.
+.PP
+.I msg
+may be read-only if
+.I ctx->autoerase_message
+is 0.
+.PP
+The fields in
+.I params
+and
+.I ctx
+shall be set according to the following specifications:
+.TP
+.B params->type
+Argon2 primitiv type. This shall be one of
+the following values:
+.I LIBAR2_ARGON2D
+(secret-depending hashing: only for
+side-channel-free environments),
+.I LIBAR2_ARGON2I
+(secret-independent hashing; good for environments
+with side-channels but worse wit respect to trade
+of attacks if only one pass is used),
+.I LIBAR2_ARGON2ID
+(hybrid construction; OK against side-channels
+and better with respect to tradeoff attacks),
+.I LIBAR2_ARGON2DS
+(substition box (S-box)-hardened construction;
+.B NB!
+This construction was not included in the
+submission to the Password Hashing Competition).
+.TP
+.B params->version
+Argon2 version number.
+.I LIBAR2_ARGON2_VERSION_10
+for verison 1.0 and
+.I LIBAR2_ARGON2_VERSION_13
+for version 1.3.
+.TP
+.B params->t_cost
+Number of passes, also called time-cost.
+Must be a positive number (not zero)
+less than 2 to the power of 32.
+.TP
+.B params->m_cost
+Amount of required memory, in kilobytes,
+also called memory-cost. Must be at least 8
+but may not be equal to or greater than
+2 to the power of 32, nor may it be a value
+that represents half, or more, of the machine's
+address space (that is, the address space
+divided by 2048).
+.TP
+.B params->lanes
+Number of lines, also called the parallelism
+parameter. Must be a positive (not zero)
+number less than 2 to the power of 24.
+.TP
+.B params->salt
+Salt (a nonce; some random data that is
+unique, or fairly unique, to a specific
+hash). May be read-only if
+.I ctx->autoerase_salt
+is 0.
+.TP
+.B params->saltlen
+The number of bytes stored in
+.IR params->salt .
+Must be at least 8 and less than
+2 to the power of 32.
+.TP
+.B params->key
+Secret (pepper; some random data that is
+unique to the application). May be read-only if
+.I ctx->autoerase_secret
+is 0.
+.TP
+.B params->keylen
+The number of bytes stored in
+.IR params->key .
+Must a non-negative integer and less than
+2 to the power of 32.
+.TP
+.B params->ad
+Arbitrary extra associated data.
+May be read-only if
+.I ctx->autoerase_associated_data
+is 0.
+.TP
+.B params->adlen
+The number of bytes stored in
+.IR params->ad .
+Must a non-negative integer and less than
+2 to the power of 32.
+.TP
+.B params->hashlen
+The tag length (the length of the output
+hash), in bytes. Must be at least 4 and
+less than 2 to the power of 32.
+.TP
+.B ctx->user_data
+User-defined data which may be used by
+callbacks functions provided by the application.
+This field is not used by the libar2 library.
+.TP
+.B ctx->autoerase_message
+Whether
+.I msg
+shall be erased when the function no
+longer needs it. (High recommended for if
+.I msg
+is a password that is only hashed once.)
+Note that there is no guarantee that
+.I msg
+is erased if the function fails
+.TP
+.B ctx->autoerase_secret.
+Whether
+.I params->key
+shall be erased when the function no
+longer needs it. Note that there is no
+guarantee that
+.I params->key
+is erased if the function fails.
+.TP
+.B ctx->autoerase_salt
+Whether
+.I params->salt
+shall be erased when the function no
+longer needs it. Note that there is no
+guarantee that
+.I params->salt
+is erased if the function fails.
+.TP
+.B ctx->autoerase_associated_data
+Whether
+.I params->ad
+shall be erased when the function no
+longer needs it. Note that there is no
+guarantee that
+.I params->ad
+is erased if the function fails.
+.TP
+.B ctx->allocate
+Pointer to a function that the function
+may use to dynamically allocate memory.
+The function shall allocate
+.I num
+times
+.I size
+bytes allocated to a multiple of
+.I alignment
+bytes, and return a pointer to the allocated
+memory; or return
+.I NULL
+on failure. The
+.I ctx
+parameter will be set to struct containing
+the function pointer. It is guaranteed that
+.IR num ,
+.IR size ,
+and
+.IR alignment
+will be positive, and that
+.I alignment
+will be a power of two. It is however not
+guaranteed that
+.I alignment
+is a multiple of
+.IR sizeof(void*) .
+.TP
+.B ctx->deallocate
+Pointer to a function that the function
+may use to deallocate memory that it
+has allocated with
+.IR *ctx->allocate .
+The function shall deallocate
+.IR ptr ,
+which is guaranteed to be
+.RI non- NULL
+and to be allocated using
+.IR *ctx->allocate .
+The
+.I ctx
+parameter will be set to struct containing
+the function pointer.
+
+.B NB!
+The
+.BR libar2_hash ()
+function will not write over memory before
+it deallocates it. This can be done function
+within
+.IR *ctx->allocate
+using the
+.BR libar2_erase (3)
+function.
+.TP
+.B ctx->init_thread_pool
+Pointer to a function that either creates and
+initialises a thread pool or stores 0 in
+.I *createdp
+(recommended if
+.I desired
+is 1).
+.I desired
+will be set to the maximum number of threads the
+.BR libar2_hash ()
+function will be using, meaning that the thread
+pool need not contain more than this number of
+threads, but may contain less if it is deemed
+desirable. the
+.BR libar2_hash ()
+function will not determine what is optimial,
+this is left up to the application to dermine.
+The number of created threads shall be stored in
+.IR *createdp .
+The
+.I ctx
+parameter will be set to struct containing
+the function pointer. The function shall return
+0 on success, and -1 on failure.
+If the function stores 0 in
+.IR *createdp ,
+.IR ctx->get_ready_threads ,
+.IR ctx->run_thread ,
+.IR ctx->join_thread_pool ,
+and
+.IR ctx->destroy_thread_pool
+need note be set.
+.TP
+.B ctx->get_ready_threads
+Pointer to a function that waits until at least one
+thread in the thread pool is ready (may be immediately),
+and stores up to
+.I n
+of their indices (the first thread have index 0) in
+.IR indices .
+The function shall return the number of ready threads.
+It is permissible to return a lesser number as long
+as the returned number is positive and does not exceed
+that number of indices stored in
+.IR indices .
+On failure the function shall return 0. The
+.I ctx
+parameter will be set to struct containing
+the function pointer.
+.TP
+.B ctx->run_thread
+Pointer to a function that makes a thread on the
+thread pool run the function provided in
+.I function
+with the argument provided in
+.IR data .
+.I index
+will be the index of the thread (the first thread
+have index 0) that shall run the function. It will
+be guaranteed by
+.I *ctx->get_ready_threads
+that the thread is resting. The
+.I ctx
+parameter will be set to struct containing
+the function pointer.
+.TP
+.B ctx->join_thread_pool
+Pointer to a function that waits until all
+threads in the thread pool are resting. The
+.I ctx
+parameter will be set to struct containing
+the function pointer. The function shall return
+0 on successful completion and -1 on failure.
+.TP
+.B ctx->destroy_thread_pool
+Pointer to a function that destroys the
+thread pool, and all threads in it. The
+.I ctx
+parameter will be set to struct containing the
+function pointer, and it will be guaranteed
+that all threads in the thread pool are resting.
+It is guaranteed that the function is called
+if and only if
+.I *ctx->init_thread_poolw
+return 0 and stored a non-0 number in its
+.IR *createdp ,
+except if
+.I *ctx->join_thread_pool
+or
+.I *ctx->.get_ready_threads
+failed.
+.PP
+It is safe to assume that
+.I *ctx->allocate
+and
+.I *ctx->deallocate
+are called in stack order and are never
+called from code called using
+.IR *ctx->run_thread ,
+that is, only one thread will be calling
+it from inside the
+.BR libar2_hash ()
+function.
+.PP
+If thread support is desired, but the application
+do not want to keep track of the threads using a
+thread pool, The
+.I *ctx->init_thread_pool
+function must store the provided in its
+.I desired
+parameter to its memory location provided in its
+.I createdp
+parameter. The application must also, in this
+case, make sure that
+.I *ctx->join_thread_pool
+returns after all started threads have stopped,
+and that the
+.I *ctx->get_ready_threads
+function stores unique indices within the range
+0 to the value stored in the
+.I desired
+of the
+.I *ctx->init_thread_pool
+function (exclusive) (start with
+.I i
+set to 0, and each time an index is stored,
+calculate it with
+.IR "(i++ % desired)" .
+Alternatively, and more preferably, this scheme
+can be used, but adapted to limit the number of
+concurrent threads, keeping track of the number
+of running threads, and not let the
+.I *ctx->get_ready_threads
+function return before this number is small
+enough; the value stored in
+.I *createdp
+must however still set to the value provided
+to the
+.I *ctx->init_thread_pool
+function in its
+.I desired
+parametr, so that to threads are not running
+concurrently with the same memory segment as the
+provided argument for the function to run, as
+this could be a source of memory corruption. It
+is however recommended to implement proper thread
+pooling as the library will call
+.I *ctx->run_thread
+.I (4*params->t_cost*params->lanes)
+times.
+
+.SH RETURN VALUES
+The
+.BR libar2_hash ()
+returns 0 and stores the binary hash of the
+message in
+.I hash
+upon successful completion. On error -1
+is returned and
+.I errno
+is set to describe the error. (The function
+may have other side-effects as described in the
+.B DESCRIPTION
+section.)
+
+.SH ERRORS
+The
+.BR libar2_hash ()
+function will fail if:
+.TP
+.B EINVAL
+.I params
+contains invalid parameters or
+.I msglen
+is too large.
+.PP
+The
+.BR libar2_hash ()
+function will also fail if the any
+function provided via
+.I ctx
+fails, and will, in that case, not modify
+.IR errno .
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_encode_base64 (3),
+.BR libar2_encode_params (3),
+.BR libar2_decode_params (3),
+.BR libar2_erase (3)

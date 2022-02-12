@@ -1,0 +1,162 @@
+.TH LIBAR2_VALIDATE_PARAMS 7 LIBAR2
+.SH NAME
+libar2_validate_params - Validate Argon2 hashing parameters
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+enum libar2_parameter_error {
+    LIBAR2_OK,
+    LIBAR2_T_COST_TOO_SMALL,
+    LIBAR2_T_COST_TOO_LARGE,
+    LIBAR2_M_COST_TOO_SMALL,
+    LIBAR2_M_COST_TOO_LARGE,
+    LIBAR2_TOO_FEW_LANES,
+    LIBAR2_TOO_MANY_LANES,
+    LIBAR2_SALT_TOO_SMALL,
+    LIBAR2_SALT_TOO_LARGE,
+    LIBAR2_KEY_TOO_LARGE,
+    LIBAR2_AD_TOO_LARGE,
+    LIBAR2_HASH_TOO_SMALL,
+    LIBAR2_HASH_TOO_LARGE,
+    LIBAR2_INVALID_TYPE,
+    LIBAR2_INVALID_VERSION
+};
+
+enum libar2_argon2_version {
+    LIBAR2_ARGON2_VERSION_10 = 0x10,
+    LIBAR2_ARGON2_VERSION_13 = 0x13
+};
+
+enum libar2_argon2_type {
+    LIBAR2_ARGON2D = 0,
+    LIBAR2_ARGON2I = 1,
+    LIBAR2_ARGON2ID = 2,
+    LIBAR2_ARGON2DS = 4
+};
+
+struct libar2_argon2_parameters {
+    enum libar2_argon2_type \fItype\fP;
+    enum libar2_argon2_version \fIversion\fP;
+    uint_least32_t \fIt_cost\fP;
+    uint_least32_t \fIm_cost\fP;
+    uint_least32_t \fIlanes\fP;
+    unsigned char *\fIsalt\fP;
+    size_t \fIsaltlen\fP;
+    unsigned char *\fIkey\fP;
+    size_t \fIkeylen\fP;
+    unsigned char *\fIad\fP;
+    size_t \fIadlen\fP;
+    size_t \fIhashlen\fP;
+};
+
+enum libar2_parameter_error libar2_validate_params(const struct libar2_argon2_parameters *\fIparams\fP, const char **\fIerrmsgp\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_validate_params ()
+function checks that the hashing parameters
+provided in the
+.I params
+parameters are valid and can be used for
+hashing by the libar2 library. An error
+description will be stored in
+.I *errmsgp
+unless
+.I errmsgp
+is
+.IR NULL .
+.PP
+Only the first discovered invalid data
+will be described.
+.PP
+.I params
+may not be
+.IR NULL .
+
+.SH RETURN VALUES
+The
+.BR libar2_validate_params ()
+function returns
+.I LIBAR2_OK
+(which has the value 0) and stores the
+statically allocated string
+.B \(dqOK\(dq
+in
+.I *errmsgp
+(unless
+.I errmsgp
+is
+.IR NULL )
+if the input is valid. If the input is
+invalid, an error code (with a positive
+value) will returned and description of
+what is incorrect is stored in
+.I *errmsgp
+(unless
+.I errmsgp
+is
+.IR NULL ).
+The return values that indicate invalid
+input, in the current version of the
+function are:
+.TP
+.B LIBAR2_T_COST_TOO_SMALL
+The time-cost parameter is too small.
+.TP
+.B LIBAR2_T_COST_TOO_LARGE
+The time-cost parameter is too large.
+.TP
+.B LIBAR2_M_COST_TOO_SMALL
+The memory-cost parameter is too small.
+.TP
+.B LIBAR2_M_COST_TOO_LARGE
+The memory-cost parameter is too large.
+.TP
+.B LIBAR2_TOO_FEW_LANES
+The lane-count parameter is too small.
+.TP
+.B LIBAR2_TOO_MANY_LANES
+The lane-count parameter is too large
+.TP
+.B LIBAR2_SALT_TOO_SMALL
+The salt parameter is too small.
+.TP
+.B LIBAR2_SALT_TOO_LARGE
+The salt parameter is too large.
+.TP
+.B LIBAR2_KEY_TOO_LARGE
+The secret (pepper) parameter is too large.
+.TP
+.B LIBAR2_AD_TOO_LARGE
+The associated data parameter is too large.
+.TP
+.B LIBAR2_HASH_TOO_SMALL
+The tag length is too small.
+.TP
+.B LIBAR2_HASH_TOO_LARGE
+The tag length is too large.
+.TP
+.B LIBAR2_INVALID_TYPE
+The primitive type parameter is not supported
+by the linked version of the libar2 library.
+.TP
+.B LIBAR2_INVALID_VERSION
+The Argon2 version parameter is not supported
+by the linked version of the libar2 library.
+
+.SH ERRORS
+The
+.BR libar2_validate_params ()
+function cannot fail.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_encode_params (3),
+.BR libar2_decode_params (3),
+.BR libar2_hash (3)
