@@ -793,4 +793,5 @@ main(void)
 	check_libar2_encode_params_libar2_decode_params();
 	check_libar2_validate_params();
 	check_libar2_hash();
+	return 0;
 }
