@@ -72,12 +72,23 @@ with an allocation size of at least the number
 of bytes that was returned by the function in
 the previous call to it.
 .PP
-The created string will have the following format:
+The created string will have the following format
 
 .RS
 .B \(dq$%s$v=%i$m=%lu,t=%lu,p=%lu$%s$\(dq,
 .RI < type >\fB,\fP
 .RI < version >\fB,\fP
+.RI < "memory cost" >\fB,\fP
+.RI < "time cost" >\fB,\fP
+.RI < "parallelism" >\fB,\fP
+.RI < "base64 encoded salt" >
+.RE
+
+if the version is explicitly specified, and otherwise
+
+.RS
+.B \(dq$%s$m=%lu,t=%lu,p=%lu$%s$\(dq,
+.RI < type >\fB,\fP
 .RI < "memory cost" >\fB,\fP
 .RI < "time cost" >\fB,\fP
 .RI < "parallelism" >\fB,\fP

@@ -526,6 +526,54 @@ check_libar2_encode_params_libar2_decode_params(void)
 	sbuf = NULL;
 #undef PARAMSTR
 
+#define PARAMSTR "$argon2i$v=16$m=4096,t=3,p=1$fn5/f35+f38$"
+	memset(&params, 0xFF, sizeof(params));
+	assert_zueq(DECODE(PARAMSTR, "1234"), sizeof(PARAMSTR) - 1);
+	assert(params.type == LIBAR2_ARGON2I);
+	assert(params.version == LIBAR2_ARGON2_VERSION_10);
+	assert(params.t_cost == 3);
+	assert(params.m_cost == 4096);
+	assert(params.lanes == 1);
+	assert(params.salt != NULL);
+	assert(params.saltlen == 8);
+	assert(!memcmp(params.salt, "~~\x7f\x7f~~\x7f\x7f", params.saltlen));
+	assert(!params.key);
+	assert(!params.keylen);
+	assert(!params.ad);
+	assert(!params.adlen);
+	assert(params.hashlen == 3);
+	assert_zueq(libar2_encode_params(NULL, &params), sizeof(PARAMSTR));
+	assert_zueq(libar2_encode_params(pbuf, &params), sizeof(PARAMSTR));
+	assert_streq(pbuf, PARAMSTR);
+	assert(sbuf != NULL);
+	ctx_st.deallocate(sbuf, &ctx_st);
+	sbuf = NULL;
+#undef PARAMSTR
+
+#define PARAMSTR "$argon2i$m=4096,t=3,p=1$fn5/f35+f38$"
+	memset(&params, 0xFF, sizeof(params));
+	assert_zueq(DECODE(PARAMSTR, "1234"), sizeof(PARAMSTR) - 1);
+	assert(params.type == LIBAR2_ARGON2I);
+	assert(params.version == 0);
+	assert(params.t_cost == 3);
+	assert(params.m_cost == 4096);
+	assert(params.lanes == 1);
+	assert(params.salt != NULL);
+	assert(params.saltlen == 8);
+	assert(!memcmp(params.salt, "~~\x7f\x7f~~\x7f\x7f", params.saltlen));
+	assert(!params.key);
+	assert(!params.keylen);
+	assert(!params.ad);
+	assert(!params.adlen);
+	assert(params.hashlen == 3);
+	assert_zueq(libar2_encode_params(NULL, &params), sizeof(PARAMSTR));
+	assert_zueq(libar2_encode_params(pbuf, &params), sizeof(PARAMSTR));
+	assert_streq(pbuf, PARAMSTR);
+	assert(sbuf != NULL);
+	ctx_st.deallocate(sbuf, &ctx_st);
+	sbuf = NULL;
+#undef PARAMSTR
+
 #undef DECODE
 }
 

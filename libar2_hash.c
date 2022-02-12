@@ -339,7 +339,7 @@ initial_hash(unsigned char hash[static 64], void *msg, size_t msglen,
 	n += store32(&block[n], (uint_least32_t)params->hashlen);
 	n += store32(&block[n], params->m_cost);
 	n += store32(&block[n], params->t_cost);
-	n += store32(&block[n], (uint_least32_t)params->version);
+	n += store32(&block[n], (uint_least32_t)(params->version ? params->version : LIBAR2_ARGON2_VERSION_10));
 	n += store32(&block[n], (uint_least32_t)params->type);
 	n += store32(&block[n], (uint_least32_t)msglen);
 	if (msglen) {

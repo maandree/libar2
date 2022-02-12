@@ -55,7 +55,7 @@
 #define LIBAR2_MIN_HASHLEN ((size_t)LIBAR2_UINT_LEAST32_C__(4))
 #define LIBAR2_MAX_HASHLEN ((size_t)LIBAR2_UINT_LEAST32_C__(0xFFFFffff))
 #define LIBAR2_IS_TYPE_OK(T) ((T) == LIBAR2_ARGON2D || (T) == LIBAR2_ARGON2I || (T) == LIBAR2_ARGON2ID || (T) == LIBAR2_ARGON2DS)
-#define LIBAR2_IS_VERSION_OK(V) ((V) == LIBAR2_ARGON2_VERSION_10 || (V) == LIBAR2_ARGON2_VERSION_13)
+#define LIBAR2_IS_VERSION_OK(V) (!(V) || (V) == LIBAR2_ARGON2_VERSION_10 || (V) == LIBAR2_ARGON2_VERSION_13)
 
 /* } */
 
@@ -180,7 +180,8 @@ struct libar2_argon2_parameters {
 	enum libar2_argon2_type type;
 
 	/**
-	 * Version number
+	 * Version number; or 0 if not specified
+	 * (which is equivalent to `LIBAR2_ARGON2_VERSION_10`)
 	 * 
 	 * `libar2_latest_argon2_version` is recommended
 	 */

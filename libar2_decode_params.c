@@ -65,7 +65,7 @@ libar2_decode_params(const char *str, struct libar2_argon2_parameters *params, c
 		if (*str++ != '$')
 			goto einval;
 	} else {
-		params->version = LIBAR2_ARGON2_VERSION_10;
+		params->version = 0; /* implicit LIBAR2_ARGON2_VERSION_10 */
 	}
 
 	while (*str && *str != '$') {
