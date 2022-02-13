@@ -14,10 +14,8 @@
 
 #if defined(__GNUC__)
 # define LIBAR2_NONNULL__(...) __attribute__((nonnull(__VA_ARGS__)))
-# define LIBAR2_PURE__ __attribute__((pure))
 #else
 # define LIBAR2_NONNULL__(...)
-# define LIBAR2_PURE__
 #endif
 
 #ifndef LIBAR2_PUBLIC__
@@ -664,15 +662,15 @@ int libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_param
  * `libar2_hash`
  * 
  * If `params->hashlen <= 64`, this function will
- * return `params->hashlen` as is, otherwise it
- * will return a value that is no greater than
- * `params->hashlen + 127`
+ * return `params->hashlen` as is
  * 
  * @param   params  Hashing parameters
  * @return          The required allocation size of the
- *                  output parameter of `libar2_hash`
+ *                  output parameter of `libar2_hash`, 0
+ *                  with errno set to EOVERFLOW if the
+ *                  result is too large
  */
-LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1) LIBAR2_PURE__
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1)
 size_t libar2_hash_buf_size(struct libar2_argon2_parameters *params);
 
 #if defined(__clang__)
