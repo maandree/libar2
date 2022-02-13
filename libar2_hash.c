@@ -572,6 +572,7 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 						tn = ctx->get_ready_threads(ts, ELEMSOF(ts), ctx);
 						if (!tn)
 							goto fail;
+						ti = 0;
 					}
 					tparams[ti].pass = (uint_least32_t)p;
 					tparams[ti].lane = (uint_least32_t)i;
