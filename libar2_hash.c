@@ -574,10 +574,10 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 							goto fail;
 						ti = 0;
 					}
-					tparams[ti].pass = (uint_least32_t)p;
-					tparams[ti].lane = (uint_least32_t)i;
-					tparams[ti].slice = (uint_least32_t)s;
-					if (ctx->run_thread(ts[ti], threaded_fill_segment, &tparams[ti], ctx))
+					tparams[ts[ti]].pass = (uint_least32_t)p;
+					tparams[ts[ti]].lane = (uint_least32_t)i;
+					tparams[ts[ti]].slice = (uint_least32_t)s;
+					if (ctx->run_thread(ts[ti], threaded_fill_segment, &tparams[ts[ti]], ctx))
 						goto fail;
 					ti++;
 				}
