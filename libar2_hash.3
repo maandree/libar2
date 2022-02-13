@@ -70,8 +70,8 @@ parameter. The resulting hash is stored,
 in raw, binary format, in
 .IR hash ,
 which must have an allocation size of at least
-the number of bytes specified by
-.IR params->hashlen .
+the number of bytes returned by
+.IR "libar2_hash_buf_size(params)" .
 The
 .I ctx
 parameter is used to provide memory and thread
@@ -477,6 +477,7 @@ fails, and will, in that case, not modify
 
 .SH SEE ALSO
 .BR libar2 (7),
+.BR libar2_hash_buf_size (3),
 .BR libar2_encode_base64 (3),
 .BR libar2_encode_params (3),
 .BR libar2_decode_params (3),

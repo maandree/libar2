@@ -1,0 +1,45 @@
+.TH LIBAR2_HASH_BUF_SIZE 7 LIBAR2
+.SH NAME
+libar2_hash_buf_size - Determine require output buffer size
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+size_t libar2_hash_buf_size(struct libar2_argon2_parameters *\fIparams\fP);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_hash_buf_size ()
+function returns the number of bytes that the
+output buffer for the
+.BR libar2_hash (3)
+function must fit (that it, it's first parameter).
+.PP
+.I params
+may not be
+.IR NULL .
+.PP
+The return value is
+.I params->hashlen
+if this number is 64 or less, otherwise it is
+.I params->hashlen
+rounded up to the next multiple of 128.
+
+.SH RETURN VALUES
+See
+.BR DESCRIPTION .
+
+.SH ERRORS
+The
+.BR libar2_hash_buf_size ()
+function cannot fail; however, if the
+return value is 0, the value has overflown.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_hash (3)

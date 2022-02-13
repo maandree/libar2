@@ -23,6 +23,7 @@ OBJ =\
 	libar2_encode_params.o\
 	libar2_erase.o\
 	libar2_hash.o\
+	libar2_hash_buf_size.o\
 	libar2_latest_argon2_version.o\
 	libar2_string_to_type.o\
 	libar2_string_to_version.o\

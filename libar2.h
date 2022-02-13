@@ -14,8 +14,10 @@
 
 #if defined(__GNUC__)
 # define LIBAR2_NONNULL__(...) __attribute__((nonnull(__VA_ARGS__)))
+# define LIBAR2_PURE__ __attribute__((pure))
 #else
 # define LIBAR2_NONNULL__(...)
+# define LIBAR2_PURE__
 #endif
 
 #ifndef LIBAR2_PUBLIC__
@@ -644,8 +646,8 @@ void libar2_erase(volatile void *mem, size_t size);
  * have erased data configured in `ctx` to be automatically
  * erased
  * 
- * @param   hash    Binary hash ("tag") output buffer, shall
- *                  be at least `params->hashlen` bytes large
+ * @param   hash    Binary hash ("tag") output buffer, shall be at
+ *                  least `libar2_hash_buf_size(params)` bytes large
  * @param   msg     Message (password) to hash; only modified if
  *                  `ctx->autoerase_message` is non-zero
  * @param   msglen  The length of `msg`; at least 0, at most 2³²−1
@@ -655,6 +657,23 @@ void libar2_erase(volatile void *mem, size_t size);
  */
 LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1, 4, 5)
 int libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameters *params, struct libar2_context *ctx);
+
+/**
+ * Return the number of bytes that is required for
+ * the first parameter, the output parmeter, of
+ * `libar2_hash`
+ * 
+ * If `params->hashlen <= 64`, this function will
+ * return `params->hashlen` as is, otherwise it
+ * will return a value that is no greater than
+ * `params->hashlen + 127`
+ * 
+ * @param   params  Hashing parameters
+ * @return          The required allocation size of the
+ *                  output parameter of `libar2_hash`
+ */
+LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1) LIBAR2_PURE__
+size_t libar2_hash_buf_size(struct libar2_argon2_parameters *params);
 
 #if defined(__clang__)
 # pragma clang diagnostic pop
