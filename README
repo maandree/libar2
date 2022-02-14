@@ -11,4 +11,4 @@ DESCRIPTION
 	(one-way encrypting) passwords.
 
 SEE ALSO
-	crypt(3)
+	crypt(3), libar2simplified(7)
