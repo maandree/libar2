@@ -3,13 +3,14 @@
 
 
 size_t
-libar2_hash_buf_size(struct libar2_argon2_parameters *params)
+libar2_hash_buf_size(const struct libar2_argon2_parameters *params)
 {
 	if (params->hashlen <= 64)
 		return params->hashlen;
-	if (params->hashlen > SIZE_MAX / 128 * 64 - 31) {
+	if (params->hashlen > SIZE_MAX - 31 ||
+	    ((params->hashlen + 31) | 31) == SIZE_MAX) {
 		errno = EOVERFLOW;
 		return 0;
 	}
-	return (params->hashlen + 31) / 64 * 128;
+	return ((params->hashlen + 31) | 31) + 1;
 }

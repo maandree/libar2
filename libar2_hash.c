@@ -487,7 +487,7 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 	unsigned char block[1024 + 128], hash0[256];
 	uint_least32_t blocks, seglen, lanelen;
 	struct block *memory;
-	size_t i, p, s, nthreads, ts[16], ti, tn;
+	size_t i, p, s, nthreads, ts[16], ti, tn, bufsize;
 	struct threaded_fill_segments_params *tparams = NULL;
 	uint_least64_t *sbox = NULL; /* This is 8K large (assuming support for uint64_t), so we allocate it dynamically */
 
@@ -596,6 +596,9 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 		memxor(&memory[lanelen - 1], &memory[i * lanelen + lanelen - 1], sizeof(*memory));
 	store_block(block, &memory[lanelen - 1]);
 	argon2_blake2b_exthash(hash, params->hashlen, block, 1024);
+	bufsize = libar2_hash_buf_size(params);
+	if (bufsize) /* should never be 0 as that would indicate the user provided a too small buffer */
+		libar2_erase(&((char *)hash)[params->hashlen], bufsize - params->hashlen);
 
 	ERASE_ARRAY(block);
 	if (sbox)

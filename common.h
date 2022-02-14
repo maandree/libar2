@@ -28,6 +28,11 @@
 #endif
 
 
+#if defined(__GNUC__)
+# define LIBAR2_WEAKLY_LINKED__ __attribute__((weak))
+#endif
+
+
 #ifndef CACHE_LINE_SIZE
 # define CACHE_LINE_SIZE 256 /* better with larger than actual than smaller than actual */
 #endif
@@ -47,6 +52,7 @@
 #   define ALIGNOF(X) sizeof(X)
 # endif
 #endif
+
 
 #define ELEMSOF(ARR) (sizeof(ARR) / sizeof(*(ARR)))
 

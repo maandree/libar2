@@ -780,6 +780,68 @@ check_libar2_hash(void)
 }
 
 
+#ifdef LIBAR2_WEAKLY_LINKED__
+
+void
+libar2_erase(volatile void *mem, size_t size)
+{
+	(void) mem;
+	(void) size;
+}
+
+static void
+check_libar2_hash_buf_size(void)
+{
+	struct libar2_argon2_parameters params;
+	char pwd[512], output[2049], *doutput;
+	unsigned char salt[LIBAR2_MIN_SALTLEN];
+	size_t size, size0, size1, i;
+	volatile char x, *avoid_code_elimination = &x;
+
+	errno = 0;
+
+	memset(&params, 0, sizeof(params));
+	memset(salt, 0, sizeof(salt));
+	params.saltlen = LIBAR2_MIN_SALTLEN;
+	params.salt = salt;
+	params.m_cost = LIBAR2_MIN_M_COST;
+	params.t_cost = LIBAR2_MIN_T_COST;
+	params.lanes = LIBAR2_MIN_LANES;
+	params.type = LIBAR2_ARGON2I;
+
+	for (params.hashlen = LIBAR2_MIN_HASHLEN; params.hashlen < sizeof(output) - 513; params.hashlen++)  {
+		memset(output, 0, sizeof(output));
+		assert(!libar2_hash(output, pwd, 0, &params, &ctx_st));
+		assert(errno == 0);
+		for (size0 = sizeof(output); size0; size0--)
+			if (output[size0 - 1] != 0)
+				break;
+
+		memset(output, 1, sizeof(output));
+		assert(!libar2_hash(output, pwd, 0, &params, &ctx_st));
+		assert(errno == 0);
+		for (size1 = sizeof(output); size1; size1--)
+			if (output[size1 - 1] != 1)
+				break;
+
+		size = MAX(size0, size1);
+		if (libar2_hash_buf_size(&params) != size || size > params.hashlen + 63)
+			fprintf(stderr, "At hashlen = %zu (expect %zu)\n", params.hashlen, size);
+		assert(size <= params.hashlen + 63);
+		assert_zueq(libar2_hash_buf_size(&params), size);
+
+		doutput = malloc(size);
+		assert(!libar2_hash(doutput, pwd, 0, &params, &ctx_st));
+		assert(errno == 0);
+		for(i = 0; i < params.hashlen; i++)
+			*avoid_code_elimination ^= doutput[i];
+		free(doutput);
+	}
+}
+
+#endif
+
+
 int
 main(void)
 {
@@ -793,5 +855,10 @@ main(void)
 	check_libar2_encode_params_libar2_decode_params();
 	check_libar2_validate_params();
 	check_libar2_hash();
+
+#ifdef LIBAR2_WEAKLY_LINKED__
+	check_libar2_hash_buf_size();
+#endif
+
 	return 0;
 }

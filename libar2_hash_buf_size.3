@@ -6,7 +6,7 @@ libar2_hash_buf_size - Determine require output buffer size
 .nf
 #include <libar2.h>
 
-size_t libar2_hash_buf_size(struct libar2_argon2_parameters *\fIparams\fP);
+size_t libar2_hash_buf_size(const struct libar2_argon2_parameters *\fIparams\fP);
 .fi
 .PP
 Link with
@@ -26,10 +26,11 @@ may not be
 .PP
 The return value is
 .I params->hashlen
-if this number is 64 or less, a multiple of 128
-that is around twice as large as
+if this number is 64 or less, otherwise the
+it will be larger than
 .I params->hashlen
-(can be a bit more).
+but no larger than
+.IR "(params->hashlen + 63)" .
 
 .SH RETURN VALUES
 The

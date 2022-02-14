@@ -23,6 +23,9 @@ __attribute__((optnone))
 __attribute__((optimize("O0")))
 # endif
 #endif
+#ifdef LIBAR2_WEAKLY_LINKED__
+LIBAR2_WEAKLY_LINKED__
+#endif
 void
 libar2_erase(volatile void *mem_, size_t size)
 {

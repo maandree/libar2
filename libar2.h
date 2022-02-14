@@ -671,7 +671,7 @@ int libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_param
  *                  result is too large
  */
 LIBAR2_PUBLIC__ LIBAR2_NONNULL__(1)
-size_t libar2_hash_buf_size(struct libar2_argon2_parameters *params);
+size_t libar2_hash_buf_size(const struct libar2_argon2_parameters *params);
 
 #if defined(__clang__)
 # pragma clang diagnostic pop
