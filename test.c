@@ -1,6 +1,15 @@
 /* See LICENSE file for copyright and license details. */
 #include "common.h"
+
+#ifndef MEASURE_TIME
+# define MEASURE_TIME 0
+#endif
+
 #include <stdlib.h>
+#if MEASURE_TIME
+# include <stdio.h>
+# include <time.h>
+#endif
 
 
 #define MEM(S) S, sizeof(S) - 1
@@ -845,6 +854,7 @@ check_libar2_hash_buf_size(void)
 int
 main(void)
 {
+#if 1
 	check_libar2_type_to_string();
 	check_libar2_string_to_type();
 	check_libar2_version_to_string();
@@ -856,8 +866,35 @@ main(void)
 	check_libar2_validate_params();
 	check_libar2_hash();
 
-#ifdef LIBAR2_WEAKLY_LINKED__
+# ifdef LIBAR2_WEAKLY_LINKED__
 	check_libar2_hash_buf_size();
+# endif
+#endif
+
+#if MEASURE_TIME
+	{
+		struct libar2_argon2_parameters params;
+		char output[512];
+		clock_t dur;
+		double ddur;
+		int r;
+		memset(&params, 0, sizeof(params));
+		params.m_cost = (uint_least32_t)1 << 18;
+		params.t_cost = 1;
+		params.lanes = 1;
+		params.saltlen = 8;
+		params.salt = (unsigned char[]){"\0\0\0\0\0\0\0\0"};
+		params.hashlen = 32;
+		assert(!libar2_validate_params(&params, NULL));
+		dur = clock();
+		r = libar2_hash(output, NULL, 0, &params, &ctx_st);
+		dur = clock() - dur;
+		assert(!r);
+		ddur = (double)dur;
+		ddur /= CLOCKS_PER_SEC;
+		ddur *= 1000;
+		fprintf(stderr, "Time: %lg ms\n", ddur);
+	}
 #endif
 
 	return 0;

@@ -1,4 +1,5 @@
 /* See LICENSE file for copyright and license details. */
+#define WARN_UNKNOWN_ENDIAN
 #include "common.h"
 
 
@@ -31,7 +32,7 @@ static const struct block zerob; /* implicitly zeroed via `static` */
 
 
 static void
-memxor(void *a_, const void *b_, size_t n)
+memxor(void *a_, const void *b_, size_t n) /* TODO using _mm_xor_si128 may improve performance */
 {
 	unsigned char *a = a_;
 	const unsigned char *b = b_;
@@ -51,6 +52,8 @@ store32(unsigned char *out, uint_least32_t value)
 	return 4;
 }
 
+
+#ifndef USING_LITTLE_ENDIAN
 
 static void
 store64(unsigned char *out, uint_least64_t value)
@@ -96,6 +99,8 @@ load_block(struct block *block64, const unsigned char *block8)
 	for (i = 0, j = 0; i < 1024; i += 8, j += 1)
 		load64(&block64->w[j], &block8[i]);
 }
+
+#endif
 
 
 static size_t
@@ -175,6 +180,7 @@ fill_block(struct block *block, const struct block *prevblock, const struct bloc
 	             ARR[OFF + W8], ARR[OFF + W9], ARR[OFF + WA], ARR[OFF + WB],\
 	             ARR[OFF + WC], ARR[OFF + WD], ARR[OFF + WE], ARR[OFF + WF])
 
+	/* TODO does unrolling these loop help? */
 	for (i = 0; i < 8; i++) {
 		BLAMKA_ROUND_(tmpblock.w, i * 16,
 		               0,  1,  2,  3,
@@ -482,7 +488,10 @@ argon2_blake2b_exthash(void *hash_, size_t hashlen, void *msg_, size_t msglen)
 int
 libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameters *params, struct libar2_context *ctx)
 {
-	unsigned char block[1024 + 128], hash0[256];
+#ifndef USING_LITTLE_ENDIAN
+	unsigned char block[1024 + 128];
+#endif
+	unsigned char hash0[256];
 	uint_least32_t blocks, seglen, lanelen;
 	struct block *memory;
 	size_t i, p, s, nthreads, ts[16], ti, tn, bufsize;
@@ -494,12 +503,21 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 		return -1;
 	}
 
-	blocks = MAX(params->m_cost, 8 * params->lanes);
+	blocks = MAX(params->m_cost, 8 * params->lanes); /* 8 * params->lanes <= 0x07FFfff8 */
 	seglen = blocks / (4 * params->lanes);
 	blocks -= blocks % (4 * params->lanes);
 	lanelen = seglen * 4;
 
-	memory = ctx->allocate(blocks, sizeof(struct block), MAX(ALIGNOF(struct block), CACHE_LINE_SIZE), ctx);
+#ifdef USING_LITTLE_ENDIAN
+	/* We are allocating one extra block, this gives use 1024 extra bytes,
+	 * but we only need 128, to ensure that `argon2_blake2b_exthash` does
+	 * not write on unallocated memory. Preferable we would just request
+	 * 128 bytes bytes, but this would require an undesirable API/ABI
+	 * change. */
+	memory = ctx->allocate(blocks + 1, sizeof(struct block), MAX(MAX(ALIGNOF(struct block), CACHE_LINE_SIZE), 16), ctx);
+#else
+	memory = ctx->allocate(blocks, sizeof(struct block), MAX(MAX(ALIGNOF(struct block), CACHE_LINE_SIZE), 16), ctx);
+#endif
 	if (!memory)
 		return -1;
 
@@ -512,15 +530,23 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 	}
 
 	initial_hash(hash0, msg, msglen, params, ctx);
-	for (i = 0; i < params->lanes; i++) {
+	for (i = 0; i < params->lanes; i++) { /* direction is important for little-endian optimisation */
 		store32(&hash0[64], 0);
 		store32(&hash0[68], (uint_least32_t)i);
+#ifdef USING_LITTLE_ENDIAN
+		argon2_blake2b_exthash(&memory[i * lanelen + 0], 1024, hash0, 72);
+#else
 		argon2_blake2b_exthash(block, 1024, hash0, 72);
 		load_block(&memory[i * lanelen + 0], block);
+#endif
 
 		store32(&hash0[64], 1);
+#ifdef USING_LITTLE_ENDIAN
+		argon2_blake2b_exthash(&memory[i * lanelen + 1], 1024, hash0, 72);
+#else
 		argon2_blake2b_exthash(block, 1024, hash0, 72);
 		load_block(&memory[i * lanelen + 1], block);
+#endif
 	}
 
 	ERASE_ARRAY(hash0);
@@ -592,13 +618,19 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 
 	for (i = 1; i < params->lanes; i++)
 		memxor(&memory[lanelen - 1], &memory[i * lanelen + lanelen - 1], sizeof(*memory));
+#ifdef USING_LITTLE_ENDIAN
+	argon2_blake2b_exthash(hash, params->hashlen, &memory[lanelen - 1], 1024);
+#else
 	store_block(block, &memory[lanelen - 1]);
 	argon2_blake2b_exthash(hash, params->hashlen, block, 1024);
+#endif
 	bufsize = libar2_hash_buf_size(params);
 	if (bufsize) /* should never be 0 as that would indicate the user provided a too small buffer */
 		libar2_erase(&((char *)hash)[params->hashlen], bufsize - params->hashlen);
 
+#ifndef USING_LITTLE_ENDIAN
 	ERASE_ARRAY(block);
+#endif
 	if (sbox)
 		ctx->deallocate(sbox, ctx);
 	ctx->deallocate(memory, ctx);

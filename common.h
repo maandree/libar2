@@ -54,6 +54,28 @@
 #endif
 
 
+#define LITTLE_ENDIAN__ 1234
+#define BIG_ENDIAN__ 4321
+#ifndef HOST_ENDIAN
+# if defined(i386) || defined(__i386__) || defined(__x86_64__)
+#  define HOST_ENDIAN LITTLE_ENDIAN__
+# endif
+#endif
+#ifdef HOST_ENDIAN
+# if HOST_ENDIAN == LITTLE_ENDIAN__
+#  define USING_LITTLE_ENDIAN
+# elif HOST_ENDIAN == BIG_ENDIAN__
+#  define USING_BIG_ENDIAN
+# endif
+#else
+# ifdef __GNUC__
+#  ifdef WARN_UNKNOWN_ENDIAN
+#   warning The host endian is unknown
+#  endif
+# endif
+#endif
+
+
 #define ELEMSOF(ARR) (sizeof(ARR) / sizeof(*(ARR)))
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
