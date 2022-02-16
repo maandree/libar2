@@ -103,6 +103,8 @@ libar2_decode_params(const char *str, struct libar2_argon2_parameters *params, c
 		if (*str != ',')
 			goto einval;
 		str++;
+		if (*str == '$')
+			goto einval;
 	}
 
 	if (have_t + have_m + have_p != 3)
@@ -132,12 +134,12 @@ libar2_decode_params(const char *str, struct libar2_argon2_parameters *params, c
 
 	return (size_t)(str - start);
 
-einval:
-	errno = EINVAL;
-	goto fail;
-
 erange:
 	errno = ERANGE;
+	goto fail;
+
+einval:
+	errno = EINVAL;
 fail:
 	if (*bufp) {
 		ctx->deallocate(*bufp, ctx);

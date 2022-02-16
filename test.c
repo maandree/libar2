@@ -22,36 +22,54 @@
 static int from_lineno = 0;
 
 
+struct context_user_data {
+	size_t allocate_fail_in;
+	int init_thread_pool_error;
+};
+
 static void *
 allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
 {
 #ifndef _POSIX_C_SOURCE
 # define _POSIX_C_SOURCE 0
 #endif
-#if _POSIX_C_SOURCE >= 200112L
 	void *ptr;
+#if _POSIX_C_SOURCE >= 200112L
 	int err;
 #endif
-	(void) ctx;
+	if (ctx->user_data) {
+		struct context_user_data *user_data = ctx->user_data;
+		if (user_data->allocate_fail_in) {
+			if (!--user_data->allocate_fail_in) {
+				errno = ENOMEM;
+				return NULL;
+			}
+		}
+	}
 	if (num > SIZE_MAX / size) {
-		errno = ENOMEM;
-		return NULL;
+		errno = ENOMEM; /* $covered$ */
+		goto enomem; /* $covered$ */
 	}
 #if _POSIX_C_SOURCE >= 200112L
 	if (alignment < sizeof(void *))
 		alignment = sizeof(void *);
 	err = posix_memalign(&ptr, alignment, num * size);
 	if (err) {
-		errno = err;
-		return NULL;
+	enomem: /* $covered$ */
+		fprintf(stderr, "Internal test failure: %s\n", strerror(errno)); /* $covered$ */
+		exit(2); /* $covered$ */
 	} else {
 		return ptr;
 	}
 #elif defined(_ISOC11_SOURCE)
-	return aligned_alloc(alignment, num * size);
+	ptr = aligned_alloc(alignment, num * size);
+	if (!ptr) {
+		fprintf(stderr, "Internal test failure: %s\n", strerror(errno)); /* $covered$ */
+		exit(2); /* $covered$ */
+	}
+	return ptr;
 #else
-	(void) alignment;
-	return malloc(num * size);
+# error No implementation for aligned memory allocation available
 #endif
 }
 
@@ -67,6 +85,13 @@ st_init_thread_pool(size_t desired, size_t *createdp, struct libar2_context *ctx
 {
 	(void) desired;
 	(void) ctx;
+	if (ctx->user_data) {
+		struct context_user_data *user_data = ctx->user_data;
+		if (user_data->init_thread_pool_error) {
+			errno = user_data->init_thread_pool_error;
+			return -1;
+		}
+	}
 	*createdp = 0;
 	return 0;
 }
@@ -93,6 +118,8 @@ nulstrcmp(const char *a, const char *b)
 	return !a ? -!!b : !b ? +1 : strcmp(a, b);
 }
 
+
+/* $covered{$ */
 
 static void
 assert_(int truth, const char *truthstr, int lineno)
@@ -140,6 +167,8 @@ assert_zueq_(size_t result, size_t expect, const char *code, int lineno)
 		exit(1);
 	}
 }
+
+/* $covered}$ */
 
 
 static void
@@ -744,6 +773,40 @@ check_hash(const char *pwd_, size_t pwdlen, const char *hash, struct libar2_cont
 }
 
 
+static int
+memis(char *mem, int ch, size_t n)
+{
+	size_t i;
+	int ok = 1;
+	for (i = 0; i < n; i++)
+		if (mem[i] != (char)ch)
+			return 0; /* $covered$ */
+	return ok;
+}
+
+/* Typo in version 1.0 */
+extern void libar2_earse(volatile void *mem, size_t size);
+
+/* libar2_erase has been replaced by this test, so we test this instead */
+extern void libar2_internal_erase__(volatile void *mem, size_t size);
+
+static void
+check_libar2_erase(void)
+{
+	char buf[1024];
+
+	memset(buf, 1, sizeof(buf));
+	libar2_earse(&buf[0], 512);
+	assert(memis(&buf[512], 1, 512));
+	assert(memis(&buf[0], 0, 512));
+
+	memset(buf, 1, sizeof(buf));
+	libar2_internal_erase__(&buf[0], 512);
+	assert(memis(&buf[512], 1, 512));
+	assert(memis(&buf[0], 0, 512));
+}
+
+
 static void
 check_libar2_hash(void)
 {
@@ -780,8 +843,8 @@ check_libar2_hash(void)
 	CHECK("password", "$argon2id$v=19$m=262144,t=2,p=1$c29tZXNhbHQ$eP4eyR+zqlZX1y5xCFTkw9m5GYx0L5YWwvCFvtlbLow");
 	CHECK("password", "$argon2id$v=19$m=256,t=2,p=1$c29tZXNhbHQ$nf65EOgLrQMR/uIPnA4rEsF5h7TKyQwu9U1bMCHGi/4");
 	CHECK("password", "$argon2id$v=19$m=256,t=2,p=2$c29tZXNhbHQ$bQk8UB/VmZZF4Oo79iDXuL5/0ttZwg2f/5U52iv1cDc");
-	CHECK("password", "$argon2id$v=19$m=65536,t=1,p=1$c29tZXNhbHQ$9qWtwbpyPd3vm1rB1GThgPzZ3/ydHL92zKL+15XZypg");
-	CHECK("password", "$argon2id$v=19$m=65536,t=4,p=1$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
+	CHECK("password", "$argon2id$v=19$m=65536,p=1,t=1$c29tZXNhbHQ$9qWtwbpyPd3vm1rB1GThgPzZ3/ydHL92zKL+15XZypg");
+	CHECK("password", "$argon2id$v=19$t=4,p=1,m=65536$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
 	CHECK("differentpassword", "$argon2id$v=19$m=65536,t=2,p=1$c29tZXNhbHQ$C4TWUs9rDEvq7w3+J4umqA32aWKB1+DSiRuBfYxFj94");
 	CHECK("password", "$argon2id$v=19$m=65536,t=2,p=1$ZGlmZnNhbHQ$vfMrBczELrFdWP0ZsfhWsRPaHppYdP3MVEMIVlqoFBw");
 
@@ -835,7 +898,7 @@ check_libar2_hash_buf_size(void)
 
 		size = MAX(size0, size1);
 		if (libar2_hash_buf_size(&params) != size || size > params.hashlen + 63)
-			fprintf(stderr, "At hashlen = %zu (expect %zu)\n", params.hashlen, size);
+			fprintf(stderr, "At hashlen = %zu (expect %zu)\n", params.hashlen, size); /* $covered$ */
 		assert(size <= params.hashlen + 63);
 		assert_zueq(libar2_hash_buf_size(&params), size);
 
@@ -851,6 +914,117 @@ check_libar2_hash_buf_size(void)
 #endif
 
 
+static void
+check_failures(void)
+{
+	struct context_user_data user_data;
+	struct libar2_argon2_parameters params;
+	char *buf, sbuf[3 * sizeof(unsigned int) + 512];
+
+	params.hashlen = SIZE_MAX;
+	errno = 0;
+	assert(libar2_hash_buf_size(&params) == 0 && errno == EOVERFLOW);
+
+	buf = NULL;
+#define CHECKE(STR, ERR)\
+	do {\
+		errno = 0;\
+		assert(libar2_decode_params(STR, &params, &buf, &ctx_st) == 0 && errno == (ERR));\
+		assert(!buf);\
+	} while (0)
+#define CHECK(STR) CHECKE(STR, EINVAL)
+	CHECK("");
+	CHECK("x");
+	CHECK("$");
+	CHECK("$argon2id");
+	CHECK("$argon2idX");
+	CHECK("$argon2idX$");
+	CHECK("$argon2id$");
+	CHECK("$argon2id$$");
+	CHECK("$argon2id$x");
+	CHECK("$argon2id$v");
+	CHECK("$argon2id$v=");
+	CHECK("$argon2id$v=$");
+	CHECK("$argon2id$v=x$");
+	CHECKE("$argon2id$v=9999999999999999999999999999999999999999999999999999999999999999999999999$", ERANGE);
+	sprintf(sbuf, "$argon2id$v=%u$", (unsigned int)INT_MAX + 1U);
+	CHECKE(sbuf, ERANGE);
+	CHECK("$argon2id$v=-1$");
+	CHECK("$argon2id$v=16");
+	CHECK("$argon2id$v=16,");
+	CHECK("$argon2id$$m=128,t=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=-128,t=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,t=-128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,t=128,p=-128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=x,t=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,t=x,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,t=128,p=x$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$t=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,t=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,t=128,p=128,m=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,t=128,p=128,t=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128,t=128,p=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$m=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$t=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19$p=128$AAAABBBBCCCC$");
+	CHECKE("$argon2id$v=19$m=999999999999999999999999999999999999999999999999999999999999,t=128,p=128$AAAABBBBCCCC$", ERANGE);
+	CHECKE("$argon2id$v=19$t=999999999999999999999999999999999999999999999999999999999999,p=128,m=128$AAAABBBBCCCC$", ERANGE);
+	CHECKE("$argon2id$v=19$p=999999999999999999999999999999999999999999999999999999999999,m=128,t=128$AAAABBBBCCCC$", ERANGE);
+	CHECK("$argon2id$m=128;t=128;p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$m=128t=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$v=19,m=128,t=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$m=128,t=128,p=128,v=19$AAAABBBBCCCC$");
+	CHECK("$argon2id$m=128,t=128,p=128,$AAAABBBBCCCC$");
+	CHECK("$argon2id$m=128,t=128,p=128");
+	CHECK("$argon2id$m=128,t=128,,p=128");
+	CHECK("$argon2id$m=128,t=128,p=128$");
+	CHECK("$argon2id$m=128,t=128,p=128,");
+	CHECK("$argon2id$m=128,t=128,p=128,$AAAABBBBCCCC");
+	CHECK("$argon2id$m=128,t=128,p=128$AAAABBBBCCCC");
+	CHECK("$argon2id$m=128,t=128,p=128$AAAAB-BBCCCC$");
+	CHECK("$argon2id$m=128,t=128,p=128$AAAABBBBC$");
+	errno = 0;
+	ctx_st.user_data = &user_data;
+	user_data.allocate_fail_in = 1;
+	assert(libar2_decode_params("$argon2id$m=8,t=1,p=1$AAAABBBBCCC$", &params, &buf, &ctx_st) == 0 && errno == ENOMEM);
+	assert(!buf);
+	ctx_st.user_data = NULL;
+#undef CHECK
+#undef CHECKE
+
+	memset(&params, 0, sizeof(params));
+	errno = 0;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_st) == -1 && errno == EINVAL);
+	params.m_cost = 32;
+	params.t_cost = 32;
+	params.lanes = 32;
+	params.salt = (unsigned char []){"\0\0\0\0\0\0\0\0"};
+	params.saltlen = 8;
+	params.hashlen = 32;
+#if SIZE_MAX >> 31 > 1
+	errno = 0;
+	assert(libar2_hash(sbuf, NULL, (size_t)1 << 32, &params, &ctx_st) == -1 && errno == EINVAL);
+#endif
+	ctx_st.user_data = &user_data;
+	memset(&user_data, 0, sizeof(user_data));
+	errno = 0;
+	user_data.allocate_fail_in = 1;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_st) == -1 && errno == ENOMEM);
+	errno = 0;
+	params.type = LIBAR2_ARGON2DS;
+	user_data.allocate_fail_in = 2;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_st) == -1 && errno == ENOMEM);
+	user_data.allocate_fail_in = 0;
+	user_data.init_thread_pool_error = EDOM;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_st) == -1 && errno == EDOM);
+	user_data.init_thread_pool_error = 0;
+	ctx_st.user_data = NULL;
+
+	errno = 0;
+}
+
+
 int
 main(void)
 {
@@ -864,11 +1038,15 @@ main(void)
 	check_libar2_decode_base64();
 	check_libar2_encode_params_libar2_decode_params();
 	check_libar2_validate_params();
+	check_libar2_erase();
 	check_libar2_hash();
-
 # ifdef LIBAR2_WEAKLY_LINKED__
 	check_libar2_hash_buf_size();
 # endif
+#endif
+
+#if 1
+	check_failures();
 #endif
 
 #if MEASURE_TIME
