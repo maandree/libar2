@@ -8,7 +8,7 @@ decode_u32(const char *s, uint_least32_t *outp)
 	uint_least32_t digit;
 	size_t i;
 
-	if ((s[0] == '0' && s[1] == '0') || !isdigit(s[0])) {
+	if ((s[0] == '0' && s[1] != '0') || !isdigit(s[0])) {
 		errno = EINVAL;
 		return 0;
 	}
