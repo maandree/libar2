@@ -53,6 +53,16 @@
 # endif
 #endif
 
+#ifndef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wunused-macros"
+#endif
+#ifdef WARN_UNKNOWN_ENDIAN
+# define WARN_UNKNOWN_ENDIAN__
+#endif
+#ifndef __GNUC__
+# pragma GCC diagnostic pop
+#endif
 
 #define LITTLE_ENDIAN__ 1234
 #define BIG_ENDIAN__ 4321
@@ -69,7 +79,7 @@
 # endif
 #else
 # ifdef __GNUC__
-#  ifdef WARN_UNKNOWN_ENDIAN
+#  ifdef WARN_UNKNOWN_ENDIAN__
 #   warning The host endian is unknown
 #  endif
 # endif
