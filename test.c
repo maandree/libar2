@@ -892,6 +892,10 @@ check_libar2_erase(void)
 static void
 check_libar2_hash(void)
 {
+	char spaces[1024];
+	memset(spaces, ' ', sizeof(spaces));
+
+#if 1
 #define CHECK(PWD, HASH)\
 	check_hash(MEM(PWD), HASH, &ctx_st, __LINE__)
 
@@ -930,7 +934,7 @@ check_libar2_hash(void)
 	CHECK("differentpassword", "$argon2id$v=19$m=65536,t=2,p=1$c29tZXNhbHQ$C4TWUs9rDEvq7w3+J4umqA32aWKB1+DSiRuBfYxFj94");
 	CHECK("password", "$argon2id$v=19$m=65536,t=2,p=1$ZGlmZnNhbHQ$vfMrBczELrFdWP0ZsfhWsRPaHppYdP3MVEMIVlqoFBw");
 
-	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw");
+	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw"); /* not well-known */
 
 #undef CHECK
 
@@ -938,9 +942,28 @@ check_libar2_hash(void)
 	check_hash(MEM(PWD), HASH, &ctx_pt, __LINE__)
 
 	CHECK("password", "$argon2i$m=256,t=2,p=2$c29tZXNhbHQ$tsEVYKap1h6scGt5ovl9aLRGOqOth+AMB+KwHpDFZPs");
-	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw");
+	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw"); /* verified above */
 	CHECK("", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$X54KZYxUSfMUihzebb70sKbheabHilo8gsUldrVU4IU");
 	CHECK("password", "$argon2id$v=19$t=4,p=1,m=65536$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
+
+#undef CHECK
+#endif
+
+#define CHECK(PWDLEN, HASH)\
+	check_hash(spaces, PWDLEN, HASH, &ctx_pt, __LINE__)
+
+	/* these are calculated with reference implmentation */
+	CHECK(1, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$MKifhakDKOM");
+	CHECK(8, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$n6AxIe1Ch+Y");
+	CHECK(16, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$n1jRvzIq/JI");
+	CHECK(99, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$7f1A+np6ekI");
+	CHECK(100, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$oQ0MP/+6pTE");
+	CHECK(101, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$0nF5gzoood8");
+	CHECK(96, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$JtutNzkqeVs");
+	CHECK(88, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$uq+BEaf7YGs");
+	CHECK(84, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$6fY3ZSyP1Yc");
+	CHECK(85, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$EvoR6s6ZVs0");
+	CHECK(83, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$q46jnJcAUCY");
 
 #undef CHECK
 }
