@@ -25,6 +25,10 @@ static int from_lineno = 0;
 struct context_user_data {
 	size_t allocate_fail_in;
 	int init_thread_pool_error;
+	int get_ready_threads_error;
+	int run_thread_error;
+	int join_thread_pool_error;
+	int destroy_thread_pool_error;
 };
 
 static void *
@@ -84,7 +88,6 @@ static int
 st_init_thread_pool(size_t desired, size_t *createdp, struct libar2_context *ctx)
 {
 	(void) desired;
-	(void) ctx;
 	if (ctx->user_data) {
 		struct context_user_data *user_data = ctx->user_data;
 		if (user_data->init_thread_pool_error) {
@@ -96,7 +99,71 @@ st_init_thread_pool(size_t desired, size_t *createdp, struct libar2_context *ctx
 	return 0;
 }
 
-static struct libar2_context ctx_st = {
+static int
+pt_init_thread_pool(size_t desired, size_t *createdp, struct libar2_context *ctx)
+{
+	(void) ctx;
+	*createdp = desired;
+	return 0;
+}
+
+static size_t
+pt_get_ready_threads(size_t *indices, size_t n, struct libar2_context *ctx)
+{
+	(void) n;
+	if (ctx->user_data) {
+		struct context_user_data *user_data = ctx->user_data;
+		if (user_data->get_ready_threads_error) {
+			errno = user_data->get_ready_threads_error;
+			return 0;
+		}
+	}
+	indices[0] = 0;
+	return 1;
+}
+
+static int
+pt_run_thread(size_t index, void (*function)(void *data), void *data, struct libar2_context *ctx)
+{
+	(void) index;
+	if (ctx->user_data) {
+		struct context_user_data *user_data = ctx->user_data;
+		if (user_data->run_thread_error) {
+			errno = user_data->run_thread_error;
+			return -1;
+		}
+	}
+	function(data);
+	return 0;
+}
+
+static int
+pt_join_thread_pool(struct libar2_context *ctx)
+{
+	if (ctx->user_data) {
+		struct context_user_data *user_data = ctx->user_data;
+		if (user_data->join_thread_pool_error) {
+			errno = user_data->join_thread_pool_error;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static int
+pt_destroy_thread_pool(struct libar2_context *ctx)
+{
+	if (ctx->user_data) {
+		struct context_user_data *user_data = ctx->user_data;
+		if (user_data->destroy_thread_pool_error) {
+			errno = user_data->destroy_thread_pool_error;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static struct libar2_context ctx_st = { /* st = single threaded */
 	.user_data = NULL,
 	.autoerase_message = 1,
 	.autoerase_secret = 1,
@@ -109,6 +176,21 @@ static struct libar2_context ctx_st = {
 	.run_thread = NULL,
 	.join_thread_pool = NULL,
 	.destroy_thread_pool = NULL
+};
+
+static struct libar2_context ctx_pt = { /* pt = phony threading */
+	.user_data = NULL,
+	.autoerase_message = 1,
+	.autoerase_secret = 1,
+	.autoerase_salt = 1,
+	.autoerase_associated_data = 1,
+	.allocate = allocate,
+	.deallocate = deallocate,
+	.init_thread_pool = pt_init_thread_pool,
+	.get_ready_threads = pt_get_ready_threads,
+	.run_thread = pt_run_thread,
+	.join_thread_pool = pt_join_thread_pool,
+	.destroy_thread_pool = pt_destroy_thread_pool
 };
 
 
@@ -848,6 +930,18 @@ check_libar2_hash(void)
 	CHECK("differentpassword", "$argon2id$v=19$m=65536,t=2,p=1$c29tZXNhbHQ$C4TWUs9rDEvq7w3+J4umqA32aWKB1+DSiRuBfYxFj94");
 	CHECK("password", "$argon2id$v=19$m=65536,t=2,p=1$ZGlmZnNhbHQ$vfMrBczELrFdWP0ZsfhWsRPaHppYdP3MVEMIVlqoFBw");
 
+	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw");
+
+#undef CHECK
+
+#define CHECK(PWD, HASH)\
+	check_hash(MEM(PWD), HASH, &ctx_pt, __LINE__)
+
+	CHECK("password", "$argon2i$m=256,t=2,p=2$c29tZXNhbHQ$tsEVYKap1h6scGt5ovl9aLRGOqOth+AMB+KwHpDFZPs");
+	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw");
+	CHECK("", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$X54KZYxUSfMUihzebb70sKbheabHilo8gsUldrVU4IU");
+	CHECK("password", "$argon2id$v=19$t=4,p=1,m=65536$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
+
 #undef CHECK
 }
 
@@ -1007,6 +1101,7 @@ check_failures(void)
 	assert(libar2_hash(sbuf, NULL, (size_t)1 << 32, &params, &ctx_st) == -1 && errno == EINVAL);
 #endif
 	ctx_st.user_data = &user_data;
+	ctx_pt.user_data = &user_data;
 	memset(&user_data, 0, sizeof(user_data));
 	errno = 0;
 	user_data.allocate_fail_in = 1;
@@ -1015,11 +1110,37 @@ check_failures(void)
 	params.type = LIBAR2_ARGON2DS;
 	user_data.allocate_fail_in = 2;
 	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_st) == -1 && errno == ENOMEM);
+	errno = 0;
+	user_data.allocate_fail_in = 3;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_pt) == -1 && errno == ENOMEM);
 	user_data.allocate_fail_in = 0;
+	errno = 0;
 	user_data.init_thread_pool_error = EDOM;
 	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_st) == -1 && errno == EDOM);
 	user_data.init_thread_pool_error = 0;
+	errno = 0;
+	user_data.get_ready_threads_error = EDOM;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_pt) == -1 && errno == EDOM);
+	user_data.get_ready_threads_error = 0;
+	errno = 0;
+	user_data.run_thread_error = EDOM;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_pt) == -1 && errno == EDOM);
+	user_data.run_thread_error = 0;
+	errno = 0;
+	user_data.join_thread_pool_error = EDOM;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_pt) == -1 && errno == EDOM);
+	user_data.join_thread_pool_error = 0;
+	errno = 0;
+	user_data.destroy_thread_pool_error = EDOM;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_pt) == -1 && errno == EDOM);
+	user_data.destroy_thread_pool_error = EDOM;
+	params.lanes = 1;
+	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_pt) == -1 && errno == EDOM);
+	params.lanes = 32;
+	user_data.destroy_thread_pool_error = 0;
+
 	ctx_st.user_data = NULL;
+	ctx_pt.user_data = NULL;
 
 	errno = 0;
 }
