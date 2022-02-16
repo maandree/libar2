@@ -40,6 +40,8 @@ LOBJ = $(OBJ:.o=.lo)
 MAN3 = $(OBJ:.o=.3)
 MAN7 = libar2.7
 
+SRC = $(OBJ:.o=.c) $(HDR) test.c
+
 
 all: libar2.a libar2.$(LIBEXT) test
 $(OBJ): $(HDR)
