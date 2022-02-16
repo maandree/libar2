@@ -831,7 +831,9 @@ check_libar2_validate_params(void)
 
 
 static void
-check_hash(const char *pwd_, size_t pwdlen, const char *hash, struct libar2_context *ctx, int lineno)
+check_hash(const char *pwd_, size_t pwdlen, const char *hash,
+           void *key, size_t keylen, void *ad, size_t adlen,
+           struct libar2_context *ctx, int lineno)
 {
 	struct libar2_argon2_parameters params;
 	char *sbuf, output[512], pwd[512], output64[700];
@@ -842,6 +844,10 @@ check_hash(const char *pwd_, size_t pwdlen, const char *hash, struct libar2_cont
 
 	strcpy(pwd, pwd_);
 	plen = libar2_decode_params(hash, &params, &sbuf, ctx);
+	params.key = key;
+	params.keylen = keylen;
+	params.ad = ad;
+	params.adlen = adlen;
 	assert(!libar2_validate_params(&params, NULL));
 	assert(!libar2_hash(output, pwd, pwdlen, &params, ctx));
 	libar2_encode_base64(output64, output, params.hashlen);
@@ -892,12 +898,13 @@ check_libar2_erase(void)
 static void
 check_libar2_hash(void)
 {
-	char spaces[1024];
+	char spaces[512];
+	char zeroes[512];
 	memset(spaces, ' ', sizeof(spaces));
+	memset(zeroes, 0, sizeof(zeroes));
 
-#if 1
 #define CHECK(PWD, HASH)\
-	check_hash(MEM(PWD), HASH, &ctx_st, __LINE__)
+	check_hash(MEM(PWD), HASH, NULL, 0, NULL, 0, &ctx_st, __LINE__)
 
 	CHECK("\x00", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$Eyx1BxGazSuPQoy7osaQuo20Dw9VI97dYUOgcC3cMgw");
 	CHECK("test", "$argon2i$v=19$m=4096,t=3,p=1$fn5/f35+f38$9tqKA4WMEsSAOEUwatjxvJLSqL1j0GQkgbsfnpresDw");
@@ -939,7 +946,7 @@ check_libar2_hash(void)
 #undef CHECK
 
 #define CHECK(PWD, HASH)\
-	check_hash(MEM(PWD), HASH, &ctx_pt, __LINE__)
+	check_hash(MEM(PWD), HASH, NULL, 0, NULL, 0, &ctx_pt, __LINE__)
 
 	CHECK("password", "$argon2i$m=256,t=2,p=2$c29tZXNhbHQ$tsEVYKap1h6scGt5ovl9aLRGOqOth+AMB+KwHpDFZPs");
 	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw"); /* verified above */
@@ -947,23 +954,38 @@ check_libar2_hash(void)
 	CHECK("password", "$argon2id$v=19$t=4,p=1,m=65536$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
 
 #undef CHECK
-#endif
 
-#define CHECK(PWDLEN, HASH)\
-	check_hash(spaces, PWDLEN, HASH, &ctx_pt, __LINE__)
+#define CHECK(PWDLEN, KEYLEN, ADLEN, HASH)\
+	check_hash(spaces, PWDLEN, HASH, KEYLEN ? zeroes : NULL, KEYLEN, KEYLEN ? zeroes : NULL, ADLEN, &ctx_pt, __LINE__)
 
 	/* these are calculated with reference implmentation */
-	CHECK(1, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$MKifhakDKOM");
-	CHECK(8, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$n6AxIe1Ch+Y");
-	CHECK(16, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$n1jRvzIq/JI");
-	CHECK(99, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$7f1A+np6ekI");
-	CHECK(100, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$oQ0MP/+6pTE");
-	CHECK(101, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$0nF5gzoood8");
-	CHECK(96, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$JtutNzkqeVs");
-	CHECK(88, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$uq+BEaf7YGs");
-	CHECK(84, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$6fY3ZSyP1Yc");
-	CHECK(85, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$EvoR6s6ZVs0");
-	CHECK(83, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$q46jnJcAUCY");
+	CHECK(1, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$MKifhakDKOM");
+	CHECK(8, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$n6AxIe1Ch+Y");
+	CHECK(16, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$n1jRvzIq/JI");
+	CHECK(99, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$7f1A+np6ekI");
+	CHECK(100, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$oQ0MP/+6pTE");
+	CHECK(101, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$0nF5gzoood8");
+	CHECK(96, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$JtutNzkqeVs");
+	CHECK(88, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$uq+BEaf7YGs");
+	CHECK(84, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$6fY3ZSyP1Yc");
+	CHECK(85, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$EvoR6s6ZVs0");
+	CHECK(83, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$q46jnJcAUCY");
+	CHECK(1, 4, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$Mhl4o3AkJuA");
+	CHECK(84, 4, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$+hlEcRn+F3s");
+	CHECK(80, 4, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$z2d6ce8UqS0");
+	CHECK(80, 140, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$15FAGe1KIX8");
+	CHECK(80, 160, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$oH3H5atuca8");
+	CHECK(80, 128, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$TsimqI1YC08");
+	CHECK(80, 256, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$mzPlVOVjVos");
+	CHECK(1, 0, 16, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$HrfeSHrbdxk");
+	CHECK(80, 0, 16, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$VRC9yoVQxGQ");
+	CHECK(76, 0, 16, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$i8q267O+NzU");
+	CHECK(76, 0, 128, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$fqP9Bhruhvs");
+	CHECK(76, 0, 130, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$kZ/OfiPy33c");
+	CHECK(76, 0, 160, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$XEdsiqJkQ4I");
+	CHECK(80, 0, 160, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$2aPe8XbvFv0");
+	CHECK(76, 0, 256, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$NlyQ7poTmcA");
+	CHECK(80, 0, 128, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$W214JDf8nik");
 
 #undef CHECK
 }

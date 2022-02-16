@@ -423,8 +423,11 @@ initial_hash(unsigned char hash[static 64], void *msg, size_t msglen,
 			}
 			if (n == 0) {
 				off += libblake_blake2b_update(&state, SEGMENT(params->ad, params->adlen, off));
-				if (params->adlen - off > 128)
+				if (params->adlen - off > 128) {
+					/* $covered{$ (not really possible, but just to be safe) */
 					off += libblake_blake2b_force_update(&state, SEGMENT(params->ad, params->adlen, off));
+					/* $covered}$ */
+				}
 				memcpy(block, SEGMENT(params->ad, params->adlen, off));
 				n = params->adlen - off;
 			}
