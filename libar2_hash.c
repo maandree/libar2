@@ -279,12 +279,11 @@ fill_segment(struct block *memory, const uint_least64_t *sbox, struct libar2_arg
 		inputb.w[3] = blocks;
 		inputb.w[4] = params->t_cost;
 		inputb.w[5] = (uint_least32_t)params->type;
-	}
-
-	if (!pass && !slice) {
-		if (data_independent) {
+		if (!pass && !slice) {
 			next_address_block(&addrb, &inputb);
+			index = 2;
 		}
+	} else if (!pass && !slice) {
 		index = 2;
 	}
 
@@ -296,9 +295,8 @@ fill_segment(struct block *memory, const uint_least64_t *sbox, struct libar2_arg
 			prevoff = off - 1;
 		if (data_independent) {
 			i = index % ELEMSOF(addrb.w);
-			if (!i) {
+			if (!i)
 				next_address_block(&addrb, &inputb);
-			}
 			prand = addrb.w[i];
 		} else {
 			prand = memory[prevoff].w[0];
