@@ -956,7 +956,7 @@ check_libar2_hash(void)
 #undef CHECK
 
 #define CHECK(PWDLEN, KEYLEN, ADLEN, HASH)\
-	check_hash(spaces, PWDLEN, HASH, KEYLEN ? zeroes : NULL, KEYLEN, KEYLEN ? zeroes : NULL, ADLEN, &ctx_pt, __LINE__)
+	check_hash(spaces, PWDLEN, HASH, KEYLEN ? zeroes : NULL, KEYLEN, ADLEN ? zeroes : NULL, ADLEN, &ctx_pt, __LINE__)
 
 	/* these are calculated with reference implmentation */
 	CHECK(1, 0, 0, "$argon2i$v=19$m=8,t=1,p=1$ICAgICAgICA$MKifhakDKOM");
