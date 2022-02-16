@@ -1133,6 +1133,7 @@ check_failures(void)
 	errno = 0;
 	user_data.destroy_thread_pool_error = EDOM;
 	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_pt) == -1 && errno == EDOM);
+	errno = 0;
 	user_data.destroy_thread_pool_error = EDOM;
 	params.lanes = 1;
 	assert(libar2_hash(sbuf, NULL, 0, &params, &ctx_pt) == -1 && errno == EDOM);
