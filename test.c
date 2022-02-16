@@ -914,7 +914,8 @@ check_libar2_hash(void)
 	CHECK("test", "$argon2i$v=19$m=4096,t=3,p=1$fn5/f35+f38$9tqKA4WMEsSAOEUwatjxvJLSqL1j0GQkgbsfnpresDw");
 	CHECK("\x00", "$argon2id$v=16$m=8,t=1,p=1$ICAgICAgICA$fXq1aUbp9yhbn+EQc4AzUUE6AKnHAkvzIXsN6J4ukvE");
 	CHECK("", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$X54KZYxUSfMUihzebb70sKbheabHilo8gsUldrVU4IU");
-	CHECK("", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$NjODMrWrS7zeivNNpHsuxD9c6uDmUQ6YqPRhb8H5DSNw9n683FUCJZ3tyxgfJpYYANI+01WT/S5zp1UVs+qNRwnkdEyLKZMg+DIOXVc9z1po9ZlZG8+Gp4g5brqfza3lvkR9vw");
+	CHECK("", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$NjODMrWrS7zeivNNpHsuxD9c6uDmUQ6YqPRhb8H5DSNw9"
+	          "n683FUCJZ3tyxgfJpYYANI+01WT/S5zp1UVs+qNRwnkdEyLKZMg+DIOXVc9z1po9ZlZG8+Gp4g5brqfza3lvkR9vw");
 	CHECK("", "$argon2ds$v=16$m=8,t=1,p=1$ICAgICAgICA$zgdykk9ZjN5VyrW0LxGw8LmrJ1Z6fqSC+3jPQtn4n0s");
 
 	CHECK("password", "$argon2i$m=65536,t=2,p=1$c29tZXNhbHQ$9sTbSlTio3Biev89thdrlKKiCaYsjjYVJxGAL3swxpQ");
@@ -940,8 +941,8 @@ check_libar2_hash(void)
 	CHECK("password", "$argon2id$v=19$m=262144,t=2,p=1$c29tZXNhbHQ$eP4eyR+zqlZX1y5xCFTkw9m5GYx0L5YWwvCFvtlbLow");
 	CHECK("password", "$argon2id$v=19$m=256,t=2,p=1$c29tZXNhbHQ$nf65EOgLrQMR/uIPnA4rEsF5h7TKyQwu9U1bMCHGi/4");
 	CHECK("password", "$argon2id$v=19$m=256,t=2,p=2$c29tZXNhbHQ$bQk8UB/VmZZF4Oo79iDXuL5/0ttZwg2f/5U52iv1cDc");
-	CHECK("password", "$argon2id$v=19$m=65536,p=1,t=1$c29tZXNhbHQ$9qWtwbpyPd3vm1rB1GThgPzZ3/ydHL92zKL+15XZypg");
-	CHECK("password", "$argon2id$v=19$t=4,p=1,m=65536$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
+	CHECK("password", "$argon2id$v=19$m=65536,t=1,p=1$c29tZXNhbHQ$9qWtwbpyPd3vm1rB1GThgPzZ3/ydHL92zKL+15XZypg");
+	CHECK("password", "$argon2id$v=19$m=65536,t=4,p=1$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
 	CHECK("differentpassword", "$argon2id$v=19$m=65536,t=2,p=1$c29tZXNhbHQ$C4TWUs9rDEvq7w3+J4umqA32aWKB1+DSiRuBfYxFj94");
 	CHECK("password", "$argon2id$v=19$m=65536,t=2,p=1$ZGlmZnNhbHQ$vfMrBczELrFdWP0ZsfhWsRPaHppYdP3MVEMIVlqoFBw");
 
@@ -955,7 +956,7 @@ check_libar2_hash(void)
 	CHECK("password", "$argon2i$m=256,t=2,p=2$c29tZXNhbHQ$tsEVYKap1h6scGt5ovl9aLRGOqOth+AMB+KwHpDFZPs");
 	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw"); /* verified above */
 	CHECK("", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$X54KZYxUSfMUihzebb70sKbheabHilo8gsUldrVU4IU");
-	CHECK("password", "$argon2id$v=19$t=4,p=1,m=65536$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
+	CHECK("password", "$argon2id$v=19$m=65536,t=4,p=1$c29tZXNhbHQ$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw");
 
 #undef CHECK
 
@@ -1112,8 +1113,8 @@ check_failures(void)
 	CHECK("$argon2id$v=19$t=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$v=19$p=128$AAAABBBBCCCC$");
 	CHECKE("$argon2id$v=19$m=999999999999999999999999999999999999999999999999999999999999,t=128,p=128$AAAABBBBCCCC$", ERANGE);
-	CHECKE("$argon2id$v=19$t=999999999999999999999999999999999999999999999999999999999999,p=128,m=128$AAAABBBBCCCC$", ERANGE);
-	CHECKE("$argon2id$v=19$p=999999999999999999999999999999999999999999999999999999999999,m=128,t=128$AAAABBBBCCCC$", ERANGE);
+	CHECKE("$argon2id$v=19$m=128,t=999999999999999999999999999999999999999999999999999999999999,p=128$AAAABBBBCCCC$", ERANGE);
+	CHECKE("$argon2id$v=19$m=128,t=128,p=999999999999999999999999999999999999999999999999999999999999$AAAABBBBCCCC$", ERANGE);
 	CHECK("$argon2id$m=128;t=128;p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=128t=128,p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$v=19,m=128,t=128,p=128$AAAABBBBCCCC$");
@@ -1127,6 +1128,12 @@ check_failures(void)
 	CHECK("$argon2id$m=128,t=128,p=128$AAAABBBBCCCC");
 	CHECK("$argon2id$m=128,t=128,p=128$AAAAB-BBCCCC$");
 	CHECK("$argon2id$m=128,t=128,p=128$AAAABBBBC$");
+	CHECK("$argon2id$,m=128,t=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$m=128,p=128,t=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$t=128,m=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$t=128,p=128,m=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$p=128,m=128,t=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$p=128,t=128,m=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=0128,t=128,p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=128,t=0128,p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=128,t=128,p=0128$AAAABBBBCCCC$");

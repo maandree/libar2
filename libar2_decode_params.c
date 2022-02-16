@@ -31,8 +31,7 @@ size_t
 libar2_decode_params(const char *str, struct libar2_argon2_parameters *params, char **bufp, struct libar2_context *ctx)
 {
 	const char *start = str;
-	uint_least32_t u32, *u32p;
-	int have_t = 0, have_m = 0, have_p = 0;
+	uint_least32_t u32;
 	size_t n, q, r;
 
 	*bufp = NULL;
@@ -68,47 +67,29 @@ libar2_decode_params(const char *str, struct libar2_argon2_parameters *params, c
 		params->version = 0; /* implicit LIBAR2_ARGON2_VERSION_10 */
 	}
 
-	while (*str && *str != '$') {
-		if (str[0] == 't' && str[1] == '=') {
-			if (have_t)
-				goto einval;
-			have_t = 1;
-			u32p = &params->t_cost;
-			str += 2;
-
-		} else if (str[0] == 'm' && str[1] == '=') {
-			if (have_m)
-				goto einval;
-			have_m = 1;
-			u32p = &params->m_cost;
-			str += 2;
-
-		} else if (str[0] == 'p' && str[1] == '=') {
-			if (have_p)
-				goto einval;
-			have_p = 1;
-			u32p = &params->lanes;
-			str += 2;
-
-		} else {
-			goto einval;
-		}
-
-		n = decode_u32(str, u32p);
-		if (!n)
-			goto fail;
-		str += n;
-		if (*str == '$')
-			break;
-		if (*str != ',')
-			goto einval;
-		str++;
-		if (*str == '$')
-			goto einval;
-	}
-
-	if (have_t + have_m + have_p != 3)
+	if (str[0] != 'm' || str[1] != '=')
 		goto einval;
+	str += 2;
+	n = decode_u32(str, &params->m_cost);
+	if (!n)
+		goto fail;
+	str += n;
+
+	if (str[0] != ',' || str[1] != 't' || str[2] != '=')
+		goto einval;
+	str += 3;
+	n = decode_u32(str, &params->t_cost);
+	if (!n)
+		goto fail;
+	str += n;
+
+	if (str[0] != ',' || str[1] != 'p' || str[2] != '=')
+		goto einval;
+	str += 3;
+	n = decode_u32(str, &params->lanes);
+	if (!n)
+		goto fail;
+	str += n;
 
 	if (*str++ != '$')
 		goto einval;
