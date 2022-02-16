@@ -180,7 +180,6 @@ fill_block(struct block *block, const struct block *prevblock, const struct bloc
 	             ARR[OFF + W8], ARR[OFF + W9], ARR[OFF + WA], ARR[OFF + WB],\
 	             ARR[OFF + WC], ARR[OFF + WD], ARR[OFF + WE], ARR[OFF + WF])
 
-	/* TODO does unrolling these loop help? */
 	for (i = 0; i < 8; i++) {
 		BLAMKA_ROUND_(tmpblock.w, i * 16,
 		               0,  1,  2,  3,
