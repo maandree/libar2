@@ -37,6 +37,13 @@ allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
 #ifndef _POSIX_C_SOURCE
 # define _POSIX_C_SOURCE 0
 #endif
+#ifndef _ISOC11_SOURCE
+# ifdef __STDC_VERSION__
+#  if __STDC_VERSION__ >= 201112L
+#   define _ISOC11_SOURCE
+#  endif
+# endif
+#endif
 	void *ptr;
 #if _POSIX_C_SOURCE >= 200112L
 	int err;
@@ -51,30 +58,27 @@ allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
 		}
 	}
 	if (num > SIZE_MAX / size) {
-		errno = ENOMEM; /* $covered$ */
-		goto enomem; /* $covered$ */
+		/* $covered{$ */
+		errno = ENOMEM;
+	fail: /* $covered$ */
+		fprintf(stderr, "Internal test failure: %s\n", strerror(errno));
+		exit(2);
+		/* $covered}$ */
 	}
 #if _POSIX_C_SOURCE >= 200112L
 	if (alignment < sizeof(void *))
 		alignment = sizeof(void *);
 	err = posix_memalign(&ptr, alignment, num * size);
-	if (err) {
-	enomem: /* $covered$ */
-		fprintf(stderr, "Internal test failure: %s\n", strerror(errno)); /* $covered$ */
-		exit(2); /* $covered$ */
-	} else {
-		return ptr;
-	}
+	if (err)
+		goto fail;
 #elif defined(_ISOC11_SOURCE)
 	ptr = aligned_alloc(alignment, num * size);
-	if (!ptr) {
-		fprintf(stderr, "Internal test failure: %s\n", strerror(errno)); /* $covered$ */
-		exit(2); /* $covered$ */
-	}
-	return ptr;
+	if (!ptr)
+		goto fail;
 #else
 # error No implementation for aligned memory allocation available
 #endif
+	return ptr;
 }
 
 static void
