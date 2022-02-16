@@ -1135,8 +1135,11 @@ check_failures(void)
 	CHECK("$argon2id$p=128,m=128,t=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$p=128,t=128,m=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=0128,t=128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$m=00128,t=128,p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=128,t=0128,p=128$AAAABBBBCCCC$");
-	CHECK("$argon2id$m=128,t=128,p=0128$AAAABBBBCCCC$");
+	CHECK("$argon2id$m=128,t=00128,p=128$AAAABBBBCCCC$");
+	CHECK("$argon2id$m=128,t=128,p=0128$AAAABBBBCCCC$");;
+	CHECK("$argon2id$m=128,t=128,p=00128$AAAABBBBCCCC$");
 	CHECK("$argon2id$v=0$m=128,t=128,p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$v=016$m=128,t=128,p=128$AAAABBBBCCCC$");
 	errno = 0;

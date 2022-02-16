@@ -8,7 +8,7 @@ decode_u32(const char *s, uint_least32_t *outp)
 	uint_least32_t digit;
 	size_t i;
 
-	if ((s[0] == '0' && s[1] != '0') || !isdigit(s[0])) {
+	if (s[0] == '0' || !isdigit(s[0])) {
 		errno = EINVAL;
 		return 0;
 	}
@@ -59,6 +59,8 @@ libar2_decode_params(const char *str, struct libar2_argon2_parameters *params, c
 			goto fail;
 		if (u32 > (uint_least32_t)INT_MAX)
 			goto erange;
+		if (!u32)
+			goto einval;
 		params->version = (enum libar2_argon2_version)u32;
 		str += n + 2;
 		if (*str++ != '$')
