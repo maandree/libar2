@@ -518,7 +518,7 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 		store32(&hash0[64], 0);
 		store32(&hash0[68], (uint_least32_t)i);
 		argon2_blake2b_exthash(block, 1024, hash0, 72);
-		load_block(&memory[i * lanelen + 0], block); /* TODO this is a copy function on LE-machines */
+		load_block(&memory[i * lanelen + 0], block);
 
 		store32(&hash0[64], 1);
 		argon2_blake2b_exthash(block, 1024, hash0, 72);
