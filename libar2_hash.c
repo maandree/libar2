@@ -725,7 +725,7 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 #ifndef USING_LITTLE_ENDIAN
 	unsigned char block[1024 + 128];
 #endif
-	unsigned char hash0[256];
+	_Alignas(4) unsigned char hash0[256];
 	uint_least32_t blocks, seglen, lanelen;
 	struct block *memory;
 	size_t i, p, s, nthreads, ts[16], ti, tn, bufsize;
@@ -760,7 +760,8 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 		return -1;
 
 	if (params->type == LIBAR2_ARGON2DS) {
-		sbox = ctx->allocate(1024, sizeof(*sbox), ALIGNOF(uint_least64_t), ctx);
+		alignment = MAX(ALIGNOF(uint_least64_t), MAX_SIMD_ALIGNMENT);
+		sbox = ctx->allocate(1024, sizeof(*sbox), alignment, ctx);
 		if (!sbox) {
 			ctx->deallocate(memory, ctx);
 			return -1;

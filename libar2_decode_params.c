@@ -66,7 +66,14 @@ libar2_decode_params(const char *str, struct libar2_argon2_parameters *params, c
 		if (*str++ != '$')
 			goto einval;
 	} else {
+#if defined(__clang__)
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wassign-enum"
+#endif
 		params->version = 0; /* implicit LIBAR2_ARGON2_VERSION_10 */
+#if defined(__clang__)
+# pragma clang diagnostic pop
+#endif
 	}
 
 	if (str[0] != 'm' || str[1] != '=')

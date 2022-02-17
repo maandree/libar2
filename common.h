@@ -96,9 +96,15 @@
 #if defined(__x86_64__) && defined(LIBAR2_TARGET__)
 # define MAX_SIMD_ALIGNMENT 64
 # define SIMD_ALIGNED _Alignas(MAX_SIMD_ALIGNMENT)
+# if defined(__GNUC__)
+#  define SIMD_ALIGNED_ATTRIBUTE __attribute__((__aligned__(MAX_SIMD_ALIGNMENT)))
+# else
+#  define SIMD_ALIGNED_ATTRIBUTE
+# endif
 #else
 # define MAX_SIMD_ALIGNMENT 1
 # define SIMD_ALIGNED /* use the types native alignment */
+# define SIMD_ALIGNED_ATTRIBUTE /* ditto */
 #endif
 
 
@@ -112,7 +118,7 @@
 #define ERASE_STRUCT(S) libar2_erase(&(S), sizeof(S))
 
 
-struct block {
+struct SIMD_ALIGNED_ATTRIBUTE block {
 	uint_least64_t w[1024 / (64 / 8)];
 };
 

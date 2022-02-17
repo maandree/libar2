@@ -25,6 +25,11 @@
 static int from_lineno = 0;
 
 
+#if defined(__clang__)
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wpadded"
+#endif
+
 struct context_user_data {
 	size_t allocate_fail_in;
 	int init_thread_pool_error;
@@ -33,6 +38,11 @@ struct context_user_data {
 	int join_thread_pool_error;
 	int destroy_thread_pool_error;
 };
+
+#if defined(__clang__)
+# pragma clang diagnostic pop
+#endif
+
 
 static void *
 allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
@@ -48,9 +58,7 @@ allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
 # endif
 #endif
 	void *ptr;
-#if _POSIX_C_SOURCE >= 200112L
-	int err;
-#endif
+	uintptr_t req_alignment = (uintptr_t)alignment;
 	if (ctx->user_data) {
 		struct context_user_data *user_data = ctx->user_data;
 		if (user_data->allocate_fail_in) {
@@ -63,24 +71,40 @@ allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
 	if (num > SIZE_MAX / size) {
 		/* $covered{$ */
 		errno = ENOMEM;
-	fail: /* $covered$ */
+	fail:
 		fprintf(stderr, "Internal test failure: %s\n", strerror(errno));
 		exit(2);
 		/* $covered}$ */
 	}
-#if _POSIX_C_SOURCE >= 200112L
 	if (alignment < sizeof(void *))
 		alignment = sizeof(void *);
-	err = posix_memalign(&ptr, alignment, num * size);
-	if (err)
+#if _POSIX_C_SOURCE >= 200112L
+	errno = posix_memalign(&ptr, alignment, num * size);
+	if (errno)
 		goto fail; /* $covered$ */
 #elif defined(_ISOC11_SOURCE)
-	ptr = aligned_alloc(alignment, num * size);
+	size *= num;
+	/* $covered{$ */
+	if (size % alignment) {
+		if (size > SIZE_MAX - (alignment - size % alignment)) {
+			errno = ENOMEM;
+			goto fail;
+		}
+		size += alignment - size % alignment;
+	}
+	/* $covered}$ */
+	ptr = aligned_alloc(alignment, size);
 	if (!ptr)
 		goto fail; /* $covered$ */
 #else
 # error No implementation for aligned memory allocation available
 #endif
+	if ((uintptr_t)ptr % req_alignment) {
+		/* $covered{$ */
+		fprintf(stderr, "Internal test failure: memory not properly aligned\n");
+		exit(2);
+		/* $covered}$ */
+	}
 	return ptr;
 }
 
@@ -849,7 +873,7 @@ check_hash(const char *pwd_, size_t pwdlen, const char *hash,
 	from_lineno = lineno;
 	errno = 0;
 
-	strcpy(pwd, pwd_);
+	memcpy(pwd, pwd_, pwdlen);
 	plen = libar2_decode_params(hash, &params, &sbuf, ctx);
 	params.key = key;
 	params.keylen = keylen;
@@ -1062,7 +1086,7 @@ check_libar2_hash_buf_size(void)
 	struct libar2_argon2_parameters params;
 	char pwd[512], output[2049], *doutput;
 	unsigned char salt[LIBAR2_MIN_SALTLEN];
-	size_t size, size0, size1, i;
+	size_t i, size, size0, size1;
 	volatile char x, *avoid_code_elimination = &x;
 
 	errno = 0;
@@ -1076,7 +1100,7 @@ check_libar2_hash_buf_size(void)
 	params.lanes = LIBAR2_MIN_LANES;
 	params.type = LIBAR2_ARGON2I;
 
-	for (params.hashlen = LIBAR2_MIN_HASHLEN; params.hashlen < sizeof(output) - 513; params.hashlen++)  {
+	for (params.hashlen = LIBAR2_MIN_HASHLEN; params.hashlen < sizeof(output) - 513; params.hashlen++) {
 		memset(output, 0, sizeof(output));
 		assert(!libar2_hash(output, pwd, 0, &params, &ctx_st));
 		assert(errno == 0);
@@ -1097,7 +1121,13 @@ check_libar2_hash_buf_size(void)
 		assert(size <= params.hashlen + 63);
 		assert_zueq(libar2_hash_buf_size(&params), size);
 
-		doutput = malloc(size);
+		size = libar2_hash_buf_size(&params);
+		assert(size > 0);
+		/* Using posix_memalign because free fails under valgrind (even
+		 * when the code is isoleted into a trivial minimal example)
+		 * when the memory has been allocated with malloc when using
+		 * musl, at least if musl is not the default libc */
+		assert(!posix_memalign((void *)&doutput, sizeof(void *), size));
 		assert(!libar2_hash(doutput, pwd, 0, &params, &ctx_st));
 		assert(errno == 0);
 		for(i = 0; i < params.hashlen; i++)
@@ -1189,7 +1219,7 @@ check_failures(void)
 	CHECK("$argon2id$m=00128,t=128,p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=128,t=0128,p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=128,t=00128,p=128$AAAABBBBCCCC$");
-	CHECK("$argon2id$m=128,t=128,p=0128$AAAABBBBCCCC$");;
+	CHECK("$argon2id$m=128,t=128,p=0128$AAAABBBBCCCC$");
 	CHECK("$argon2id$m=128,t=128,p=00128$AAAABBBBCCCC$");
 	CHECK("$argon2id$v=0$m=128,t=128,p=128$AAAABBBBCCCC$");
 	CHECK("$argon2id$v=016$m=128,t=128,p=128$AAAABBBBCCCC$");
