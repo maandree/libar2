@@ -295,6 +295,7 @@ fill_block(struct block *block, const struct block *prevblock, const struct bloc
 		}
 	}
 
+	/* TODO optimise (also fBlaMka) once similar BLAKE2b code in libblake has been optimised { */
 #define BLAMKA_G(A, B, C, D)\
 	A = fBlaMka(A, B);\
 	D = rotr64(D ^ A, 32);\
@@ -335,6 +336,7 @@ fill_block(struct block *block, const struct block *prevblock, const struct bloc
 		              64, 65, 80, 81,
 		              96, 97, 112, 113);
 	}
+	/* } */
 
 	blockxor(block, &tmpblock);
 
