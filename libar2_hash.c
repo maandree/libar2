@@ -497,7 +497,7 @@ initial_hash(unsigned char hash[static 64], void *msg, size_t msglen,
 			}
 		}
 		if (ctx->autoerase_message)
-			ERASE(msg, msglen);
+			libar2_erase(msg, msglen);
 	}
 
 	n += store32(&block[n], (uint_least32_t)params->saltlen);
@@ -520,7 +520,7 @@ initial_hash(unsigned char hash[static 64], void *msg, size_t msglen,
 			n = params->saltlen - off;
 		}
 		if (ctx->autoerase_salt)
-			ERASE(params->salt, params->saltlen);
+			libar2_erase(params->salt, params->saltlen);
 	}
 
 	n += store32(&block[n], (uint_least32_t)params->keylen);
@@ -543,7 +543,7 @@ initial_hash(unsigned char hash[static 64], void *msg, size_t msglen,
 			n = params->keylen - off;
 		}
 		if (ctx->autoerase_secret)
-			ERASE(params->key, params->keylen);
+			libar2_erase(params->key, params->keylen);
 	}
 
 	n += store32(&block[n], (uint_least32_t)params->adlen);
@@ -573,7 +573,7 @@ initial_hash(unsigned char hash[static 64], void *msg, size_t msglen,
 			}
 		}
 		if (ctx->autoerase_associated_data)
-			ERASE(params->ad, params->adlen);
+			libar2_erase(params->ad, params->adlen);
 	}
 
 	libblake_blake2b_digest(&state, block, n, 0, 64, hash);

@@ -108,9 +108,8 @@
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 
 
-#define ERASE(PTR, N) libar2_erase(PTR, N)
-#define ERASE_ARRAY(ARR) ERASE(ARR, sizeof(ARR))
-#define ERASE_STRUCT(S) ERASE(&(S), sizeof(S))
+#define ERASE_ARRAY(ARR) libar2_erase(ARR, sizeof(ARR))
+#define ERASE_STRUCT(S) libar2_erase(&(S), sizeof(S))
 
 
 struct block {
