@@ -674,45 +674,46 @@ libar2_init(void)
 	static volatile int initialised = 0;
 	static volatile atomic_flag spinlock = ATOMIC_FLAG_INIT;
 
-	if (!initialised) {
-		while (atomic_flag_test_and_set(&spinlock));
+	if (initialised)
+		return;
 
-		if (!initialised) {
-#if 0
-			__builtin_cpu_init();
-			/* $covered{$ (we know that it works, but the test cannot enter every branch) */
-			if (__builtin_cpu_supports("avx512f"))
-				libar2_internal_use_avx512f__();
-			else if (__builtin_cpu_supports("avx2"))
-				libar2_internal_use_avx2__();
-			else if (__builtin_cpu_supports("sse2"))
+	while (atomic_flag_test_and_set(&spinlock));
+
+	if (!initialised) {
+# if 0
+		__builtin_cpu_init();
+		/* $covered{$ (we know that it works, but the test cannot enter every branch) */
+		if (__builtin_cpu_supports("avx512f"))
+			libar2_internal_use_avx512f__();
+		else if (__builtin_cpu_supports("avx2"))
+			libar2_internal_use_avx2__();
+		else if (__builtin_cpu_supports("sse2"))
+			libar2_internal_use_sse2__();
+		else
+			libar2_internal_use_generic__();
+		/* $covered}$ */
+# else
+		uint32_t x;
+		__asm__ volatile("cpuid" : "=b"(x) : "a"(7), "c"(0) : "edx");
+		/* $covered{$ (we know that it works, but the test cannot enter every branch) */
+		if (x & ((uint32_t)1 << 16)) {
+			libar2_internal_use_avx512f__();
+		} else if (x & ((uint32_t)1 << 5)) {
+			libar2_internal_use_avx2__();
+		} else {
+			__asm__ volatile("cpuid" : "=d"(x) : "a"(1) : "ebx", "ecx");
+			if (x & ((uint32_t)1 << 26))
 				libar2_internal_use_sse2__();
 			else
 				libar2_internal_use_generic__();
-			/* $covered}$ */
-#else
-			uint32_t x;
-			__asm__ volatile("cpuid" : "=b"(x) : "a"(7), "c"(0) : "edx");
-			/* $covered{$ (we know that it works, but the test cannot enter every branch) */
-			if (x & ((uint32_t)1 << 16)) {
-				libar2_internal_use_avx512f__();
-			} else if (x & ((uint32_t)1 << 5)) {
-				libar2_internal_use_avx2__();
-			} else {
-				__asm__ volatile("cpuid" : "=d"(x) : "a"(1) : "ebx", "ecx");
-				if (x & ((uint32_t)1 << 26))
-					libar2_internal_use_sse2__();
-				else
-					libar2_internal_use_generic__();
-			}
-			/* $covered}$ */
-#endif
-			initialised = 1;
 		}
-
-		atomic_flag_clear(&spinlock);
-#endif
+		/* $covered}$ */
+# endif
+		initialised = 1;
 	}
+
+	atomic_flag_clear(&spinlock);
+#endif
 }
 
 
