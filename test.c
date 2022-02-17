@@ -860,9 +860,8 @@ check_hash(const char *pwd_, size_t pwdlen, const char *hash,
 	libar2_encode_base64(output64, output, params.hashlen);
 	assert_streq(output64, &hash[plen]);
 	assert(errno == 0);
-	if (sbuf) {
+	if (sbuf)
 		ctx->deallocate(sbuf, ctx);
-	}
 
 	from_lineno = 0;
 }
