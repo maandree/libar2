@@ -31,6 +31,11 @@
 #if defined(__GNUC__)
 # define LIBAR2_WEAKLY_LINKED__ __attribute__((__weak__))
 # define LIBAR2_TARGET__(TARGETS) __attribute__((__target__(TARGETS)))
+# define LIBAR2_INITIALISER__ __attribute__((__constructor__))
+# define LIBAR2_HIDDEN__ __attribute__((__visibility__("hidden")))
+#else
+# define LIBAR2_INITIALISER__
+# define LIBAR2_HIDDEN__
 #endif
 
 
@@ -110,6 +115,15 @@
 struct block {
 	uint_least64_t w[1024 / (64 / 8)];
 };
+
+
+LIBAR2_HIDDEN__ void libar2_internal_erase__(volatile void *mem, size_t size);
+#if defined(__x86_64__) && defined(LIBAR2_TARGET__)
+LIBAR2_HIDDEN__ void libar2_internal_use_generic__(void);
+LIBAR2_HIDDEN__ void libar2_internal_use_sse2__(void);
+LIBAR2_HIDDEN__ void libar2_internal_use_avx2__(void);
+LIBAR2_HIDDEN__ void libar2_internal_use_avx512f__(void);
+#endif
 
 
 #if defined(__clang__)

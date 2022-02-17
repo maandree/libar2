@@ -1,6 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 #define WARN_UNKNOWN_ENDIAN
 #include "common.h"
+#include <stdatomic.h>
 
 #if defined(__x86_64__)
 # include <immintrin.h>
@@ -32,7 +33,7 @@ static const struct libblake_blake2b_params b2params = {
 };
 
 
-static const struct block zerob; /* implicitly zeroed via `static` */
+static const SIMD_ALIGNED struct block zerob; /* implicitly zeroed via `static` */
 
 
 #if defined(__x86_64__) && defined(LIBAR2_TARGET__)
@@ -82,7 +83,7 @@ blockxor_vanilla(struct block *a, const struct block *b)
 		a->w[i] ^= b->w[i];
 }
 
-static void (*blockxor)(struct block *a, const struct block *b) = &blockxor_vanilla; /* TODO set at init */
+static void (*blockxor)(struct block *a, const struct block *b) = &blockxor_vanilla;
 
 LIBAR2_TARGET__("avx2")
 static void
@@ -118,7 +119,7 @@ blockxor3_vanilla(struct block *a, const struct block *b, const struct block *c)
 }
 
 #define DEFINED_BLOCKXOR3
-static void (*blockxor3)(struct block *a, const struct block *b, const struct block *c) = &blockxor3_vanilla; /* TODO set at init */
+static void (*blockxor3)(struct block *a, const struct block *b, const struct block *c) = &blockxor3_vanilla;
 
 LIBAR2_TARGET__("avx2")
 static void
@@ -151,7 +152,7 @@ blockcpy_vanilla(struct block *a, const struct block *b)
 }
 
 #define DEFINED_BLOCKCPY
-static void (*blockcpy)(struct block *a, const struct block *b) = &blockcpy_vanilla; /* TODO set at init */
+static void (*blockcpy)(struct block *a, const struct block *b) = &blockcpy_vanilla;
 
 #else
 
@@ -400,7 +401,7 @@ fill_segment(struct block *memory, const uint_least64_t *sbox, struct libar2_arg
 	     uint_least32_t pass, uint_least32_t lane, uint_least32_t slice)
 {
 	int data_independent;
-	struct block inputb, addrb;
+	SIMD_ALIGNED struct block inputb, addrb;
 	uint_least32_t off, prevoff, rlane, rindex;
 	uint_least32_t index = 0, i;
 	uint_least64_t prand;
@@ -620,6 +621,91 @@ argon2_blake2b_exthash(void *hash_, size_t hashlen, void *msg_, size_t msglen)
 }
 
 
+#if defined(__x86_64__) && defined(LIBAR2_TARGET__)
+
+void
+libar2_internal_use_generic__(void)
+{
+	blockxor = &blockxor_vanilla;
+	blockxor3 = &blockxor3_vanilla;
+	blockcpy = &blockcpy_vanilla;
+}
+
+void
+libar2_internal_use_sse2__(void)
+{
+	libar2_internal_use_generic__();
+}
+
+void
+libar2_internal_use_avx2__(void)
+{
+	blockxor = &blockxor_avx2;
+	blockxor3 = &blockxor3_avx2;
+	blockcpy = &blockcpy_avx2;
+}
+
+void
+libar2_internal_use_avx512f__(void)
+{
+	blockxor = &blockxor_avx512f;
+	blockxor3 = &blockxor3_avx512f;
+	blockcpy = &blockcpy_avx512f;
+}
+
+#endif
+
+
+LIBAR2_INITIALISER__ /* ignored if statically linked, so this function shall
+                      * by the application, we just use the constructor (init)
+                      * attribute in case that is forgotten, as it will only
+                      * improve performance, but the library with function
+                      * perfectly fine even if it's not called */
+void
+libar2_init(void)
+{
+#if defined(__x86_64__) && defined(LIBAR2_TARGET__)
+	static volatile int initialised = 0;
+	static volatile atomic_flag spinlock = ATOMIC_FLAG_INIT;
+
+	if (!initialised) {
+		while (atomic_flag_test_and_set(&spinlock));
+
+		if (!initialised) {
+#if 0
+			__builtin_cpu_init();
+			if (__builtin_cpu_supports("avx512f"))
+				libar2_internal_use_avx512f__();
+			else if (__builtin_cpu_supports("avx2"))
+				libar2_internal_use_avx2__();
+			else if (__builtin_cpu_supports("sse2"))
+				libar2_internal_use_sse2__();
+			else
+			libar2_internal_use_generic__();
+#else
+			uint32_t x;
+			__asm__ volatile("cpuid" : "=b"(x) : "a"(7), "c"(0) : "edx");
+			if (x & ((uint32_t)1 << 16)) {
+				libar2_internal_use_avx512f__();
+			} else if (x & ((uint32_t)1 << 5)) {
+				libar2_internal_use_avx2__();
+			} else {
+				__asm__ volatile("cpuid" : "=d"(x) : "a"(1) : "ebx", "ecx");
+				if (x & ((uint32_t)1 << 26))
+					libar2_internal_use_sse2__();
+				else
+					libar2_internal_use_generic__();
+			}
+#endif
+			initialised = 1;
+		}
+
+		atomic_flag_clear(&spinlock);
+#endif
+	}
+}
+
+
 int
 libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameters *params, struct libar2_context *ctx)
 {
@@ -633,6 +719,8 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 	struct threaded_fill_segments_params *tparams = NULL;
 	uint_least64_t *sbox = NULL; /* This is 8K large (assuming support for uint64_t), so we allocate it dynamically */
 	size_t alignment;
+
+	libar2_init();
 
 	if (libar2_validate_params(params, NULL) || msglen >> 31 > 1) {
 		errno = EINVAL;

@@ -620,6 +620,14 @@ LIBAR2_PUBLIC__
 void libar2_erase(volatile void *mem, size_t size);
 
 /**
+ * Initialise the library
+ * 
+ * Called automatically by `libar2_hash`
+ */
+LIBAR2_PUBLIC__
+void libar2_init(void);
+
+/**
  * Hash a message
  * 
  * The recommended why of verify a password is to hash the

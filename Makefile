@@ -37,7 +37,7 @@ HDR =\
 	common.h
 
 LOBJ = $(OBJ:.o=.lo)
-MAN3 = $(OBJ:.o=.3)
+MAN3 = $(OBJ:.o=.3) libar2_init.3
 MAN7 = libar2.7
 
 SRC = $(OBJ:.o=.c) $(HDR) test.c

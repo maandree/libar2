@@ -6,19 +6,13 @@
 #elif defined(explicit_bzero) || defined(__OpenBSD__)
 #elif defined(explicit_memset)
 #else
-# if defined(__GNUC__)
-__attribute__((visibility("hidden")))
-# endif
+LIBAR2_HIDDEN__
 extern void *(*const volatile libar2_internal_explicit_memset__)(void *, int, size_t);
 void *(*const volatile libar2_internal_explicit_memset__)(void *, int, size_t) = &memset;
 #endif
 
 
-/* libar2_internal_erase__ is intended for the test code to use, because it replaces `libar2_erase`  */
-# if defined(__GNUC__)
-__attribute__((visibility("hidden")))
-# endif
-void libar2_internal_erase__(volatile void *mem, size_t size);
+/* libar2_internal_erase__ is intended for the test code to use, because it replaces `libar2_erase` */
 #if defined(__clang__) /* before __GNUC__ because that is also set in clang */
 # if __has_attribute(optnone)
 __attribute__((optnone))

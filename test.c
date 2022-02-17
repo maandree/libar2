@@ -879,9 +879,6 @@ memis(char *mem, int ch, size_t n)
 /* Typo in version 1.0 */
 extern void libar2_earse(volatile void *mem, size_t size);
 
-/* libar2_erase has been replaced by this test, so we test this instead */
-extern void libar2_internal_erase__(volatile void *mem, size_t size);
-
 static void
 check_libar2_erase(void)
 {
@@ -892,6 +889,7 @@ check_libar2_erase(void)
 	assert(memis(&buf[512], 1, 512));
 	assert(memis(&buf[0], 0, 512));
 
+	/* libar2_erase has been replaced by this test, so we test this instead */
 	memset(buf, 1, sizeof(buf));
 	libar2_internal_erase__(&buf[0], 512);
 	assert(memis(&buf[512], 1, 512));

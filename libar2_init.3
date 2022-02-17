@@ -1,0 +1,44 @@
+.TH LIBAR2_INIT 3 LIBAR2
+.SH NAME
+libar2_init - Initialise libar2
+
+.SH SYNOPSIS
+.nf
+#include <libar2.h>
+
+void libar2_init(void);
+.fi
+.PP
+Link with
+.IR -lar2 .
+
+.SH DESCRIPTION
+The
+.BR libar2_init ()
+function initialises the library, specifically
+it selects which versions of different functions
+the library shall use, based on the capabilities
+of the machine that runs the function.
+.PP
+The
+.BR libar2_init ()
+function is called automatically by the
+.BR libar2_hash (3)
+function, but it is desirable, but not necessary,
+for multi-threaded applications to call it manually,
+also depending on the capabilities of the compiler
+and linker that was used to create the library, the
+.BR libar2_init ()
+function may be called automatically at load-time.
+
+.SH RETURN VALUES
+None.
+
+.SH ERRORS
+The
+.BR libar2_init ()
+function cannot fail.
+
+.SH SEE ALSO
+.BR libar2 (7),
+.BR libar2_hash (3)
