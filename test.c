@@ -4,6 +4,9 @@
 #ifndef MEASURE_TIME
 # define MEASURE_TIME 0
 #endif
+#ifndef MEASURE_TIME_ONLY
+# define MEASURE_TIME_ONLY MEASURE_TIME
+#endif
 
 #include <stdlib.h>
 #if MEASURE_TIME
@@ -70,11 +73,11 @@ allocate(size_t num, size_t size, size_t alignment, struct libar2_context *ctx)
 		alignment = sizeof(void *);
 	err = posix_memalign(&ptr, alignment, num * size);
 	if (err)
-		goto fail;
+		goto fail; /* $covered$ */
 #elif defined(_ISOC11_SOURCE)
 	ptr = aligned_alloc(alignment, num * size);
 	if (!ptr)
-		goto fail;
+		goto fail; /* $covered$ */
 #else
 # error No implementation for aligned memory allocation available
 #endif
@@ -994,6 +997,57 @@ check_libar2_hash(void)
 }
 
 
+#if defined(__x86_64__) && defined(LIBAR2_TARGET__) && defined(__GNUC__)
+static void
+run_check_libar2_hash_optimisations(void)
+{
+
+#define CHECK(PWD, HASH)\
+	check_hash(MEM(PWD), HASH, NULL, 0, NULL, 0, &ctx_st, __LINE__)
+
+	CHECK("password", "$argon2i$m=256,t=2,p=2$c29tZXNhbHQ$tsEVYKap1h6scGt5ovl9aLRGOqOth+AMB+KwHpDFZPs");
+	CHECK("", "$argon2ds$v=16$m=8,t=1,p=2$ICAgICAgICA$+6+yBnWbuV7mLs6rKMhvi+SLbkzb5CB6Jd2pSWuC/Kw");
+	CHECK("", "$argon2d$v=16$m=8,t=1,p=1$ICAgICAgICA$X54KZYxUSfMUihzebb70sKbheabHilo8gsUldrVU4IU");
+	CHECK("password", "$argon2i$v=19$m=256,t=2,p=2$c29tZXNhbHQ$T/XOJ2mh1/TIpJHfCdQan76Q5esCFVoT5MAeIM1Oq2E");
+
+#undef CHECK
+}
+#endif
+
+
+static void
+check_libar2_hash_optimisations(void)
+{
+#if defined(__x86_64__) && defined(LIBAR2_TARGET__) && defined(__GNUC__)
+
+	__builtin_cpu_init();
+
+	libar2_internal_use_generic__();
+	run_check_libar2_hash_optimisations();
+
+	libar2_internal_use_sse2__();
+	if (__builtin_cpu_supports("sse2"))
+		run_check_libar2_hash_optimisations(); /* $covered$ */
+
+	libar2_internal_use_avx2__();
+	if (__builtin_cpu_supports("avx2"))
+		run_check_libar2_hash_optimisations(); /* $covered$ */
+
+	libar2_internal_use_avx512f__();
+	if (__builtin_cpu_supports("avx512f"))
+		run_check_libar2_hash_optimisations(); /* $covered$ */
+	/* $covered{$ */
+	else if (__builtin_cpu_supports("avx2"))
+		libar2_internal_use_avx2__();
+	else if (__builtin_cpu_supports("sse2"))
+		libar2_internal_use_sse2__();
+	else
+		libar2_internal_use_generic__();
+	/* $covered}$ */
+#endif
+}
+
+
 #ifdef LIBAR2_WEAKLY_LINKED__
 
 void
@@ -1212,7 +1266,7 @@ check_failures(void)
 int
 main(void)
 {
-#if 1
+#if !MEASURE_TIME_ONLY
 	check_libar2_type_to_string();
 	check_libar2_string_to_type();
 	check_libar2_version_to_string();
@@ -1227,9 +1281,7 @@ main(void)
 # ifdef LIBAR2_WEAKLY_LINKED__
 	check_libar2_hash_buf_size();
 # endif
-#endif
 
-#if 1
 	check_failures();
 #endif
 
@@ -1259,5 +1311,8 @@ main(void)
 	}
 #endif
 
+#if !MEASURE_TIME_ONLY
+	check_libar2_hash_optimisations();
+#endif
 	return 0;
 }

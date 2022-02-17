@@ -64,6 +64,7 @@ blockxor_avx2(struct block *a_, const struct block *b_)
 
 }
 
+/* $covered{$ (removing from coverage test because my machine does not spport AVX512F) */
 LIBAR2_TARGET__("avx512f")
 static void
 blockxor_avx512f(struct block *a_, const struct block *b_)
@@ -74,6 +75,7 @@ blockxor_avx512f(struct block *a_, const struct block *b_)
 	for (i = 0; i < sizeof(*a_) / (512 / 8); i++)
 		a[i] = _mm512_xor_si512(a[i], b[i]);
 }
+/* $covered}$ */
 
 static void
 blockxor_vanilla(struct block *a, const struct block *b)
@@ -98,6 +100,7 @@ blockxor3_avx2(struct block *a_, const struct block *b_, const struct block *c_)
 
 }
 
+/* $covered{$ (removing from coverage test because my machine does not spport AVX512F) */
 LIBAR2_TARGET__("avx512f")
 static void
 blockxor3_avx512f(struct block *a_, const struct block *b_, const struct block *c_)
@@ -109,6 +112,7 @@ blockxor3_avx512f(struct block *a_, const struct block *b_, const struct block *
 	for (i = 0; i < sizeof(*a_) / (512 / 8); i++)
 		a[i] = _mm512_xor_si512(b[i], c[i]);
 }
+/* $covered}$ */
 
 static void
 blockxor3_vanilla(struct block *a, const struct block *b, const struct block *c)
@@ -132,6 +136,7 @@ blockcpy_avx2(struct block *a_, const struct block *b_)
 		a[i] = _mm256_load_si256(&b[i]);
 }
 
+/* $covered{$ (removing from coverage test because my machine does not spport AVX512F) */
 LIBAR2_TARGET__("avx512f")
 static void
 blockcpy_avx512f(struct block *a_, const struct block *b_)
@@ -142,6 +147,7 @@ blockcpy_avx512f(struct block *a_, const struct block *b_)
 	for (i = 0; i < sizeof(*a_) / (512 / 8); i++)
 		a[i] = _mm512_load_si512(&b[i]);
 }
+/* $covered}$ */
 
 static void
 blockcpy_vanilla(struct block *a, const struct block *b)
@@ -674,6 +680,7 @@ libar2_init(void)
 		if (!initialised) {
 #if 0
 			__builtin_cpu_init();
+			/* $covered{$ (we know that it works, but the test cannot enter every branch) */
 			if (__builtin_cpu_supports("avx512f"))
 				libar2_internal_use_avx512f__();
 			else if (__builtin_cpu_supports("avx2"))
@@ -681,10 +688,12 @@ libar2_init(void)
 			else if (__builtin_cpu_supports("sse2"))
 				libar2_internal_use_sse2__();
 			else
-			libar2_internal_use_generic__();
+				libar2_internal_use_generic__();
+			/* $covered}$ */
 #else
 			uint32_t x;
 			__asm__ volatile("cpuid" : "=b"(x) : "a"(7), "c"(0) : "edx");
+			/* $covered{$ (we know that it works, but the test cannot enter every branch) */
 			if (x & ((uint32_t)1 << 16)) {
 				libar2_internal_use_avx512f__();
 			} else if (x & ((uint32_t)1 << 5)) {
@@ -696,6 +705,7 @@ libar2_init(void)
 				else
 					libar2_internal_use_generic__();
 			}
+			/* $covered}$ */
 #endif
 			initialised = 1;
 		}
