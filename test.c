@@ -1243,7 +1243,7 @@ main(void)
 		double ddur;
 		int r;
 		memset(&params, 0, sizeof(params));
-		params.m_cost = (uint_least32_t)1 << 18;
+		params.m_cost = 8;
 		params.t_cost = 1;
 		params.lanes = 1;
 		params.saltlen = 8;

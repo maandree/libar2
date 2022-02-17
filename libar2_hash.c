@@ -2,6 +2,10 @@
 #define WARN_UNKNOWN_ENDIAN
 #include "common.h"
 
+#if defined(__x86_64__)
+# include <immintrin.h>
+#endif
+
 
 struct threaded_fill_segments_params {
 	struct block *memory;
@@ -31,15 +35,135 @@ static const struct libblake_blake2b_params b2params = {
 static const struct block zerob; /* implicitly zeroed via `static` */
 
 
+#if defined(__x86_64__) && defined(LIBAR2_TARGET__)
+
+/* Relative, approximate, execution times for blockxor:
+ *                       Over large memory     Repeatedly over one block
+ *     plain old xor:    1                     1
+ *     _mm_xor_si128:    1.055                 1.031   (removed becaused it's slow)
+ *     _mm256_xor_si256: 0.828                 0.514
+ *     _mm512_xor_si512: I don't have the means to test this
+ * 
+ * No difference noted between having a function pointer
+ * to the plain-old-xor version and just implementing it
+ * with a regular function.
+ * 
+ * Similar performance is observed for blockxor3 and blockcpy
+ */
+
+LIBAR2_TARGET__("avx2")
 static void
-memxor(void *a_, const void *b_, size_t n) /* TODO using _mm_xor_si128 may improve performance */
+blockxor_avx2(struct block *a_, const struct block *b_)
 {
-	unsigned char *a = a_;
-	const unsigned char *b = b_;
+	__m256i *a = (__m256i *)a_;
+	const __m256i *b = (const __m256i *)b_;
 	size_t i;
-	for (i = 0; i < n; i++)
-		a[i] ^= b[i];
+	for (i = 0; i < sizeof(*a_) / (256 / 8); i++)
+		a[i] = _mm256_xor_si256(a[i], b[i]);
+
 }
+
+LIBAR2_TARGET__("avx512f")
+static void
+blockxor_avx512f(struct block *a_, const struct block *b_)
+{
+	__m512i *a = (__m512i *)a_;
+	const __m512i *b = (const __m512i *)b_;
+	size_t i;
+	for (i = 0; i < sizeof(*a_) / (512 / 8); i++)
+		a[i] = _mm512_xor_si512(a[i], b[i]);
+}
+
+static void
+blockxor_vanilla(struct block *a, const struct block *b)
+{
+	size_t i;
+	for (i = 0; i < ELEMSOF(a->w); i++)
+		a->w[i] ^= b->w[i];
+}
+
+static void (*blockxor)(struct block *a, const struct block *b) = &blockxor_vanilla; /* TODO set at init */
+
+LIBAR2_TARGET__("avx2")
+static void
+blockxor3_avx2(struct block *a_, const struct block *b_, const struct block *c_)
+{
+	__m256i *a = (__m256i *)a_;
+	const __m256i *b = (const __m256i *)b_;
+	const __m256i *c = (const __m256i *)c_;
+	size_t i;
+	for (i = 0; i < sizeof(*a_) / (256 / 8); i++)
+		a[i] = _mm256_xor_si256(b[i], c[i]);
+
+}
+
+LIBAR2_TARGET__("avx512f")
+static void
+blockxor3_avx512f(struct block *a_, const struct block *b_, const struct block *c_)
+{
+	__m512i *a = (__m512i *)a_;
+	const __m512i *b = (const __m512i *)b_;
+	const __m512i *c = (const __m512i *)c_;
+	size_t i;
+	for (i = 0; i < sizeof(*a_) / (512 / 8); i++)
+		a[i] = _mm512_xor_si512(b[i], c[i]);
+}
+
+static void
+blockxor3_vanilla(struct block *a, const struct block *b, const struct block *c)
+{
+	size_t i;
+	for (i = 0; i < ELEMSOF(a->w); i++)
+		a->w[i] = b->w[i] ^ c->w[i];
+}
+
+#define DEFINED_BLOCKXOR3
+static void (*blockxor3)(struct block *a, const struct block *b, const struct block *c) = &blockxor3_vanilla; /* TODO set at init */
+
+LIBAR2_TARGET__("avx2")
+static void
+blockcpy_avx2(struct block *a_, const struct block *b_)
+{
+	__m256i *a = (__m256i *)a_;
+	const __m256i *b = (const __m256i *)b_;
+	size_t i;
+	for (i = 0; i < sizeof(*a_) / (256 / 8); i++)
+		a[i] = _mm256_load_si256(&b[i]);
+}
+
+LIBAR2_TARGET__("avx512f")
+static void
+blockcpy_avx512f(struct block *a_, const struct block *b_)
+{
+	__m512i *a = (__m512i *)a_;
+	const __m512i *b = (const __m512i *)b_;
+	size_t i;
+	for (i = 0; i < sizeof(*a_) / (512 / 8); i++)
+		a[i] = _mm512_load_si512(&b[i]);
+}
+
+static void
+blockcpy_vanilla(struct block *a, const struct block *b)
+{
+	size_t i;
+	for (i = 0; i < ELEMSOF(a->w); i++)
+		a->w[i] = b->w[i];
+}
+
+#define DEFINED_BLOCKCPY
+static void (*blockcpy)(struct block *a, const struct block *b) = &blockcpy_vanilla; /* TODO set at init */
+
+#else
+
+static void
+blockxor(struct block *a, const struct block *b)
+{
+	size_t i;
+	for (i = 0; i < ELEMSOF(a->w); i++)
+		a->w[i] ^= b->w[i];
+}
+
+#endif
 
 
 static size_t
@@ -132,9 +256,18 @@ fill_block(struct block *block, const struct block *prevblock, const struct bloc
 {
 	uint_least64_t x = 0;
 	uint_least32_t x_hi, x_lo;
-	struct block tmpblock;
 	size_t i;
+	SIMD_ALIGNED struct block tmpblock;
 
+#if defined(DEFINED_BLOCKXOR3) && defined(DEFINED_BLOCKCPY)
+	if (with_xor) {
+		blockxor3(&tmpblock, refblock, prevblock);
+		blockxor(block, &tmpblock);
+	} else {
+		blockxor3(&tmpblock, refblock, prevblock);
+		blockcpy(block, &tmpblock);
+	}
+#else
 	if (with_xor) {
 		for (i = 0; i < ELEMSOF(refblock->w); i++)
 			block->w[i] ^= tmpblock.w[i] = refblock->w[i] ^ prevblock->w[i];
@@ -142,6 +275,7 @@ fill_block(struct block *block, const struct block *prevblock, const struct bloc
 		for (i = 0; i < ELEMSOF(refblock->w); i++)
 			block->w[i] = tmpblock.w[i] = refblock->w[i] ^ prevblock->w[i];
 	}
+#endif
 
 	if (sbox) {
 		x = tmpblock.w[0] ^ tmpblock.w[ELEMSOF(tmpblock.w) - 1];
@@ -195,8 +329,7 @@ fill_block(struct block *block, const struct block *prevblock, const struct bloc
 		              96, 97, 112, 113);
 	}
 
-	for (i = 0; i < ELEMSOF(refblock->w); i++)
-		block->w[i] ^= tmpblock.w[i];
+	blockxor(block, &tmpblock);
 
 	block->w[0] += x;
 	block->w[ELEMSOF(block->w) - 1] += x;
@@ -499,6 +632,7 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 	size_t i, p, s, nthreads, ts[16], ti, tn, bufsize;
 	struct threaded_fill_segments_params *tparams = NULL;
 	uint_least64_t *sbox = NULL; /* This is 8K large (assuming support for uint64_t), so we allocate it dynamically */
+	size_t alignment;
 
 	if (libar2_validate_params(params, NULL) || msglen >> 31 > 1) {
 		errno = EINVAL;
@@ -510,15 +644,16 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 	blocks -= blocks % (4 * params->lanes);
 	lanelen = seglen * 4;
 
+	alignment = MAX(MAX(ALIGNOF(struct block), CACHE_LINE_SIZE), MAX_SIMD_ALIGNMENT);
 #ifdef USING_LITTLE_ENDIAN
 	/* We are allocating one extra block, this gives use 1024 extra bytes,
 	 * but we only need 128, to ensure that `argon2_blake2b_exthash` does
 	 * not write on unallocated memory. Preferable we would just request
 	 * 128 bytes bytes, but this would require an undesirable API/ABI
 	 * change. */
-	memory = ctx->allocate(blocks + 1, sizeof(struct block), MAX(MAX(ALIGNOF(struct block), CACHE_LINE_SIZE), 16), ctx);
+	memory = ctx->allocate(blocks + 1, sizeof(struct block), alignment, ctx);
 #else
-	memory = ctx->allocate(blocks, sizeof(struct block), MAX(MAX(ALIGNOF(struct block), CACHE_LINE_SIZE), 16), ctx);
+	memory = ctx->allocate(blocks, sizeof(struct block), alignment, ctx);
 #endif
 	if (!memory)
 		return -1;
@@ -619,7 +754,7 @@ libar2_hash(void *hash, void *msg, size_t msglen, struct libar2_argon2_parameter
 	}
 
 	for (i = 1; i < params->lanes; i++)
-		memxor(&memory[lanelen - 1], &memory[i * lanelen + lanelen - 1], sizeof(*memory));
+		blockxor(&memory[lanelen - 1], &memory[i * lanelen + lanelen - 1]);
 #ifdef USING_LITTLE_ENDIAN
 	argon2_blake2b_exthash(hash, params->hashlen, &memory[lanelen - 1], 1024);
 #else

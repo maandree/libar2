@@ -29,7 +29,8 @@
 
 
 #if defined(__GNUC__)
-# define LIBAR2_WEAKLY_LINKED__ __attribute__((weak))
+# define LIBAR2_WEAKLY_LINKED__ __attribute__((__weak__))
+# define LIBAR2_TARGET__(TARGETS) __attribute__((__target__(TARGETS)))
 #endif
 
 
@@ -83,6 +84,15 @@
 #   warning The host endian is unknown
 #  endif
 # endif
+#endif
+
+
+#if defined(__x86_64__) && defined(LIBAR2_TARGET__)
+# define MAX_SIMD_ALIGNMENT 64
+# define SIMD_ALIGNED _Alignas(MAX_SIMD_ALIGNMENT)
+#else
+# define MAX_SIMD_ALIGNMENT 1
+# define SIMD_ALIGNED /* use the types native alignment */
 #endif
 
 
