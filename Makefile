@@ -74,6 +74,7 @@ install: libar2.a libar2.$(LIBEXT)
 	mkdir -p -- "$(DESTDIR)$(MANPREFIX)/man7"
 	cp -- libar2.a "$(DESTDIR)$(PREFIX)/lib/"
 	cp -- libar2.$(LIBEXT) "$(DESTDIR)$(PREFIX)/lib/libar2.$(LIBMINOREXT)"
+	$(FIX_INSTALL_NAME) -- "$(DESTDIR)$(PREFIX)/lib/libar2.$(LIBMINOREXT)"
 	ln -sf -- libar2.$(LIBMINOREXT) "$(DESTDIR)$(PREFIX)/lib/libar2.$(LIBMAJOREXT)"
 	ln -sf -- libar2.$(LIBMAJOREXT) "$(DESTDIR)$(PREFIX)/lib/libar2.$(LIBEXT)"
 	cp -- libar2.h "$(DESTDIR)$(PREFIX)/include/"
