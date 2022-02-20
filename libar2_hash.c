@@ -478,7 +478,7 @@ initial_hash(unsigned char hash[static 64], void *msg, size_t msglen,
 	unsigned char block[128 + 3];
 	size_t n = 0, off;
 
-	libblake_blake2b_init(&state, &b2params, NULL);
+	libblake_blake2b_init(&state, &b2params);
 
 	n += store32(&block[n], params->lanes);
 	n += store32(&block[n], (uint_least32_t)params->hashlen);
@@ -600,7 +600,7 @@ argon2_blake2b_exthash(void *hash_, size_t hashlen, void *msg_, size_t msglen)
 	params = b2params;
 	params.digest_len = (uint_least8_t)MIN(hashlen, (size_t)params.digest_len);
 
-	libblake_blake2b_init(&state, &params, NULL);
+	libblake_blake2b_init(&state, &params);
 	n = store32(block, (uint_least32_t)hashlen);
 	n += off = storemem(&block[n], msg, msglen, 128 - n);
 	if (off == msglen) {
@@ -614,13 +614,13 @@ argon2_blake2b_exthash(void *hash_, size_t hashlen, void *msg_, size_t msglen)
 		hashlen -= 32;
 		params.digest_len = 64;
 		while (hashlen > 64) {
-			libblake_blake2b_init(&state, &params, NULL);
+			libblake_blake2b_init(&state, &params);
 			libblake_blake2b_digest(&state, hash, 64, 0, 64, &hash[32]);
 			hash += 32;
 			hashlen -= 32;
 		}
 		params.digest_len = (uint_least8_t)hashlen;
-		libblake_blake2b_init(&state, &params, NULL);
+		libblake_blake2b_init(&state, &params);
 		libblake_blake2b_digest(&state, hash, 64, 0, hashlen, &hash[32]);
 	}
 
