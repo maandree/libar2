@@ -593,46 +593,56 @@ check_libar2_decode_base64(void)
 
 	errno = 0;
 
+#define DECODE_BASE64(S) (stpcpy(buf, S), libar2_decode_base64(buf, buf, &len))
+
 	assert(libar2_decode_base64("", buf, &len) == 0);
 	assert(len == 0);
 	assert(errno == 0);
 
-	assert(libar2_decode_base64("A", buf, &len) == 0);
+	assert(DECODE_BASE64("") == 0);
+	assert(len == 0);
+	assert(errno == 0);
+
+	assert(DECODE_BASE64("A") == 0);
 	assert(len == 0);
 	assert(errno == 0);
 
 #define CHECK(S) len == sizeof(S) - 1 && !memcmp(buf, S, len)
 
-	assert(libar2_decode_base64("AA", buf, &len) == 2);
+	assert(DECODE_BASE64("AA") == 2);
 	assert(CHECK("\x00"));
 	assert(errno == 0);
 
-	assert(libar2_decode_base64("AAA", buf, &len) == 3);
+	assert(DECODE_BASE64("AAA") == 3);
 	assert(CHECK("\x00\x00"));
 	assert(errno == 0);
 
-	assert(libar2_decode_base64("AAAA", buf, &len) == 4);
+	assert(DECODE_BASE64("AAAA") == 4);
 	assert(CHECK("\x00\x00\x00"));
 	assert(errno == 0);
 
-	assert(libar2_decode_base64("AAAAA", buf, &len) == 4);
+	assert(DECODE_BASE64("AAAAA") == 4);
 	assert(CHECK("\x00\x00\x00"));
 	assert(errno == 0);
 
-	assert(libar2_decode_base64("AAAAAA", buf, &len) == 6);
+	assert(DECODE_BASE64("AAAAAA") == 6);
 	assert(CHECK("\x00\x00\x00\x00"));
 	assert(errno == 0);
 
-	assert(libar2_decode_base64("MTIzNDU2Nzg", buf, &len) == 11);
+	assert(DECODE_BASE64("MTIzNDU2Nzg") == 11);
 	assert(CHECK("12345678"));
 	assert(errno == 0);
 
-	assert(libar2_decode_base64("dGVzdHRlc3Q", buf, &len) == 11);
+	assert(DECODE_BASE64("dGVzdHRlc3Q") == 11);
 	assert(CHECK("testtest"));
 	assert(errno == 0);
 
-	assert(libar2_decode_base64("enlbXXkyMSAh", buf, &len) == 12);
+	assert(DECODE_BASE64("enlbXXkyMSAh") == 12);
 	assert(CHECK("zy[]y21 !"));
+	assert(errno == 0);
+
+	assert(DECODE_BASE64("e358fn1+fn5/fw") == 14);
+	assert(CHECK("{~|~}~~~\x7f\x7f"));
 	assert(errno == 0);
 
 	assert(libar2_decode_base64("e358fn1+fn5/fw", buf, &len) == 14);
@@ -640,6 +650,7 @@ check_libar2_decode_base64(void)
 	assert(errno == 0);
 
 #undef CHECK
+#undef DECODE_BASE64
 }
 
 
