@@ -7,6 +7,8 @@ libar2_encode_base64 - Encode data to base64
 #include <libar2.h>
 
 size_t libar2_encode_base64(char *\fIbuf\fP, const void *\fIdata\fP, size_t \fIlen\fP);
+
+#define libar2_encode_base64_overlap_support libar2_encode_base64
 .fi
 .PP
 Link with
@@ -46,6 +48,25 @@ is 0 or if
 .I buf
 is
 .IR NULL .
+
+.PP
+In previous versions of libar2, the
+.BR libar2_encode_base64 (3)
+did not support overlap in the
+.I buf
+and
+.IR data ,
+this was a bug. The existence of the
+.B libar2_encode_base64_overlap_support
+macro indicates that this bug has been fixed.
+The
+.B libar2_encode_base64_overlap_support
+macro is defined as
+.I libar2_encode_base64
+so that it can be used in place of
+.BR libar2_encode_base64 ()
+if support of memory overlap is required; e.g.
+when encoding directly into the read buffer.
 
 .SH RETURN VALUES
 The

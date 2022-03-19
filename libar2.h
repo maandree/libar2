@@ -552,6 +552,7 @@ size_t libar2_encode_params(char *buf, const struct libar2_argon2_parameters *pa
  */
 LIBAR2_PUBLIC__
 size_t libar2_encode_base64(char *buf, const void *data, size_t len);
+#define libar2_encode_base64_overlap_support libar2_encode_base64
 
 /**
  * Decode hashing parameters

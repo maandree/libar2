@@ -555,31 +555,47 @@ check_libar2_encode_base64(void)
 	assert_streq(buf, "");
 	assert(errno == 0);
 
-	assert(libar2_encode_base64(buf, MEM("\x00")) == 3);
+#define ENCODE_BASE64(S) libar2_encode_base64(buf, MEM(S))
+
+	assert(ENCODE_BASE64("") == 1);
+	assert_streq(buf, "");
+	assert(errno == 0);
+
+	assert(ENCODE_BASE64("\x00") == 3);
 	assert_streq(buf, "AA");
 	assert(errno == 0);
 
-	assert(libar2_encode_base64(buf, MEM("\x00\x00")) == 4);
+	assert(ENCODE_BASE64("\x00\x00") == 4);
 	assert_streq(buf, "AAA");
 	assert(errno == 0);
 
-	assert(libar2_encode_base64(buf, MEM("\x00\x00\x00")) == 5);
+	assert(ENCODE_BASE64("\x00\x00\x00") == 5);
 	assert_streq(buf, "AAAA");
 	assert(errno == 0);
 
-	assert(libar2_encode_base64(buf, MEM("12345678")) == 12);
+	assert(ENCODE_BASE64("12345678") == 12);
 	assert_streq(buf, "MTIzNDU2Nzg");
 	assert(errno == 0);
 
-	assert(libar2_encode_base64(buf, MEM("testtest")) == 12);
+	assert(ENCODE_BASE64("testtest") == 12);
 	assert_streq(buf, "dGVzdHRlc3Q");
 	assert(errno == 0);
 
-	assert(libar2_encode_base64(buf, MEM("zy[]y21 !")) == 13);
+	assert(ENCODE_BASE64("zy[]y21 !") == 13);
 	assert_streq(buf, "enlbXXkyMSAh");
 	assert(errno == 0);
 
+	assert(ENCODE_BASE64("{~|~}~~~\x7f\x7f") == 15);
+	assert_streq(buf, "e358fn1+fn5/fw");
+	assert(errno == 0);
+
+#undef ENCODE_BASE64
+
 	assert(libar2_encode_base64(buf, MEM("{~|~}~~~\x7f\x7f")) == 15);
+	assert_streq(buf, "e358fn1+fn5/fw");
+	assert(errno == 0);
+
+	assert(libar2_encode_base64_overlap_support(buf, MEM("{~|~}~~~\x7f\x7f")) == 15);
 	assert_streq(buf, "e358fn1+fn5/fw");
 	assert(errno == 0);
 }

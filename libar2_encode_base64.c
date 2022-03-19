@@ -15,27 +15,40 @@ size_t
 libar2_encode_base64(char *buf, const void *data_, size_t len)
 {
 	const unsigned char *data = data_;
+	unsigned char a, b, c;
 	size_t q, r, i;
 
 	q = len / 3;
 	r = len % 3;
 
 	if (buf) {
-		for (i = 0; i < q; i++, data += 3) {
-			*buf++ = lut[O1(data[0], data[1], data[2]) & 255];
-	                *buf++ = lut[O2(data[0], data[1], data[2]) & 255];
-			*buf++ = lut[O3(data[0], data[1], data[2]) & 255];
-	                *buf++ = lut[O4(data[0], data[1], data[2]) & 255];
-		}
+		buf = &buf[q * 4];
+		data = &data[q * 3];
+
 		if (r == 1) {
-			*buf++ = lut[O1(data[0], 0, 0) & 255];
-	                *buf++ = lut[O2(data[0], 0, 0) & 255];
+			a = data[0];
+			buf[0] = lut[O1(a, 0, 0) & 255];
+	                buf[1] = lut[O2(a, 0, 0) & 255];
+			buf[2] = '\0';
 		} else if (r == 2) {
-			*buf++ = lut[O1(data[0], data[1], 0) & 255];
-	                *buf++ = lut[O2(data[0], data[1], 0) & 255];
-			*buf++ = lut[O3(data[0], data[1], 0) & 255];
+			a = data[0], b = data[1];
+			buf[0] = lut[O1(a, b, 0) & 255];
+	                buf[1] = lut[O2(a, b, 0) & 255];
+			buf[2] = lut[O3(a, b, 0) & 255];
+			buf[3] = '\0';
+		} else {
+			buf[0] = '\0';
 		}
-		*buf = '\0';
+
+		for (i = 0; i < q; i++) {
+			data -= 3;
+			buf -= 4;
+			a = data[0], b = data[1], c = data[2];
+			buf[0] = lut[O1(a, b, c) & 255];
+	                buf[1] = lut[O2(a, b, c) & 255];
+			buf[2] = lut[O3(a, b, c) & 255];
+	                buf[3] = lut[O4(a, b, c) & 255];
+		}
 	}
 
 	return (q * 4) + r + !!r + 1;

@@ -80,6 +80,7 @@ install: libar2.a libar2.$(LIBEXT)
 	cp -- libar2.h "$(DESTDIR)$(PREFIX)/include/"
 	cp -- $(MAN3) "$(DESTDIR)$(MANPREFIX)/man3/"
 	cp -- $(MAN7) "$(DESTDIR)$(MANPREFIX)/man7/"
+	ln -sf -- libar2_encode_base64.3 "$(DESTDIR)$(MANPREFIX)/man3/libar2_encode_base64_overlap_support.3"
 
 uninstall:
 	-rm -f -- "$(DESTDIR)$(PREFIX)/lib/libar2.a"
@@ -89,6 +90,7 @@ uninstall:
 	-rm -f -- "$(DESTDIR)$(PREFIX)/include/libar2.h"
 	-cd -- "$(DESTDIR)$(MANPREFIX)/man3/" && rm -f -- $(MAN3)
 	-cd -- "$(DESTDIR)$(MANPREFIX)/man7/" && rm -f -- $(MAN7)
+	-rm -f -- "$(DESTDIR)$(MANPREFIX)/man3/libar2_encode_base64_overlap_support.3"
 
 clean:
 	-rm -f -- *.o *.a *.lo *.su *.so *.so.* *.dll *.dylib
