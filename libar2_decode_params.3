@@ -41,7 +41,7 @@ struct libar2_context {
 };
 
 size_t libar2_decode_params(const char *\fIstr\fP, const struct libar2_argon2_parameters *\fIparams\fP,
-                            char **\fIbuf\fP, truct libar2_context *\fIctx\fP);
+                            char **\fIbuf\fP, struct libar2_context *\fIctx\fP);
 .fi
 .PP
 Link with
@@ -54,12 +54,12 @@ function decodes a string, provided via the
 .I str
 parameter, that encodes Argon2 hashing parameters,
 and stores the decoded parameters in
-.I param
-and return the number of bytes read from, up to
-but exclude the first byte that was determine not
+.I params
+and returns the number of bytes read from, up to
+but excluding the first byte that was determined not
 to be part of the encoded data. For more
 information about
-.IR param ,
+.IR params ,
 see
 .BR libar2_hash (3).
 .PP
