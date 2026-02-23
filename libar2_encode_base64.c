@@ -3,6 +3,11 @@
 
 
 #define ALPHABET "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+#if defined(__GNUC__) && !defined(__clang__)
+# if __GNUC__ >= 8
+__attribute__((__nonstring__))
+# endif
+#endif
 static char lut[256] = ALPHABET ALPHABET ALPHABET ALPHABET;
 
 #define O1(I1, I2, I3) ((I1) >> 2)
