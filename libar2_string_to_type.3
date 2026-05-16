@@ -24,7 +24,7 @@ The
 .BR libar2_string_to_type ()
 function converts a string, provided via the
 .I str
-parameter, to a Argon2 primitive type and stores
+parameter, to an Argon2 primitive type and stores
 the constant that represents that type in
 .IR *typep .
 .PP
@@ -34,14 +34,14 @@ currently recognised strings, and are converted to
 .IR LIBAR2_ARGON2D ,
 .IR LIBAR2_ARGON2I ,
 .IR LIBAR2_ARGON2ID ,
-and.
+and
 .IR LIBAR2_ARGON2DS ,
 respectively.
 .PP
 The
 .BR libar2_string_to_type ()
-is case-insensitive and will recognise the
-dollar-sign
+function is case-insensitive and will
+recognise the dollar-sign
 .RB ( $ )
 character, or a NUL byte, as the end of the
 string.

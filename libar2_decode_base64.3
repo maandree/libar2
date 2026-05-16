@@ -15,7 +15,7 @@ Link with
 .SH DESCRIPTION
 The
 .BR libar2_decode_base64 ()
-function decodes some binary data that has
+function decodes binary data that has
 been encoded with base64. The base64-encoding
 shall be provided via the
 .I str
@@ -32,7 +32,7 @@ is stored in
 .PP
 .I str
 may, but does not have to, be padded, up to
-(or short there of) the next length that is
+(or short thereof) the next length that is
 divisible by 4, unless the length is already
 divisible by 4, using equals-sign
 .RB ( = )
@@ -80,7 +80,7 @@ dynamically allocated buffer.
 #include <stdlib.h>
 
 static char *
-decode_base64(const const *str, char **endp, size_t *lenp)
+decode_base64(const *str, char **endp, size_t *lenp)
 {
     size_t len;
     size_t n = libar2_decode_base64(str, NULL, &len);

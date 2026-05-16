@@ -18,7 +18,7 @@ The
 function returns the number of bytes that the
 output buffer for the
 .BR libar2_hash (3)
-function must fit (that it, it's first parameter).
+function must fit (that is, its first parameter).
 .PP
 .I params
 may not be
@@ -26,7 +26,7 @@ may not be
 .PP
 The return value is
 .I params->hashlen
-if this number is 64 or less, otherwise the
+if this number is 64 or less, otherwise
 it will be larger than
 .I params->hashlen
 but no larger than
@@ -38,8 +38,8 @@ The
 function returns the number of bytes that the
 output buffer size for the
 .BR libar2_hash (3)
-function upon successful completion. On failure
-0 is returned and
+function must be upon successful completion.
+On failure 0 is returned and
 .I errno
 is set to describe the error.
 

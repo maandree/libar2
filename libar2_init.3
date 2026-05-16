@@ -15,19 +15,20 @@ Link with
 .SH DESCRIPTION
 The
 .BR libar2_init ()
-function initialises the library, specifically
+function initialises the library. Specifically
 it selects which versions of different functions
 the library shall use, based on the capabilities
-of the machine that runs the function.
+of the machine that executes the function.
 .PP
 The
 .BR libar2_init ()
 function is called automatically by the
 .BR libar2_hash (3)
 function, but it is desirable, but not necessary,
-for multi-threaded applications to call it manually,
-also depending on the capabilities of the compiler
-and linker that was used to create the library, the
+for multi-threaded applications to call it manually.
+Additionally, depending on the capabilities of the
+compiler and linker that was used to create the
+library, the
 .BR libar2_init ()
 function may be called automatically at load-time.
 

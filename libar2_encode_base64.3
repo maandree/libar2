@@ -17,8 +17,7 @@ Link with
 .SH DESCRIPTION
 The
 .BR libar2_encode_base64 ()
-function encodes some binary data, provided
-via the
+function encodes binary data provided via the
 .I data
 parameter, into base64, and stores the base64
 encoding in
@@ -52,11 +51,11 @@ is
 .PP
 In previous versions of libar2, the
 .BR libar2_encode_base64 (3)
-did not support overlap in the
+function did not support overlap in the
 .I buf
 and
-.IR data ,
-this was a bug. The existence of the
+.IR data
+parameters; this was a bug. The presence of the
 .B libar2_encode_base64_overlap_support
 macro indicates that this bug has been fixed.
 The

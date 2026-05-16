@@ -106,20 +106,20 @@ and
 shall be set according to the following specifications:
 .TP
 .B params->type
-Argon2 primitiv type. This shall be one of
+Argon2 primitive type. This shall be one of
 the following values:
 .I LIBAR2_ARGON2D
 (secret-depending hashing: only for
 side-channel-free environments),
 .I LIBAR2_ARGON2I
 (secret-independent hashing; good for environments
-with side-channels but worse wit respect to trade
-of attacks if only one pass is used),
+with side-channels but worse with respect to trade
+off attacks if only one pass is used),
 .I LIBAR2_ARGON2ID
 (hybrid construction; OK against side-channels
 and better with respect to tradeoff attacks),
 .I LIBAR2_ARGON2DS
-(substition box (S-box)-hardened construction;
+(substitution box (S-box)-hardened construction;
 .B NB!
 This construction was not included in the
 submission to the Password Hashing Competition).
@@ -128,7 +128,7 @@ submission to the Password Hashing Competition).
 Argon2 version number.
 .I LIBAR2_ARGON2_VERSION_10
 or 0 (implicit specification)
-for verison 1.0 and
+for version 1.0 and
 .I LIBAR2_ARGON2_VERSION_13
 for version 1.3.
 .TP
@@ -147,7 +147,7 @@ address space (that is, the address space
 divided by 2048).
 .TP
 .B params->lanes
-Number of lines, also called the parallelism
+Number of lanes, also called the parallelism
 parameter. Must be a positive (not zero)
 number less than 2 to the power of 24.
 .TP
@@ -173,7 +173,7 @@ is 0.
 .B params->keylen
 The number of bytes stored in
 .IR params->key .
-Must a non-negative integer and less than
+Must be a non-negative integer and less than
 2 to the power of 32.
 .TP
 .B params->ad
@@ -185,7 +185,7 @@ is 0.
 .B params->adlen
 The number of bytes stored in
 .IR params->ad .
-Must a non-negative integer and less than
+Must be a non-negative integer and less than
 2 to the power of 32.
 .TP
 .B params->hashlen
@@ -195,21 +195,21 @@ less than 2 to the power of 32.
 .TP
 .B ctx->user_data
 User-defined data which may be used by
-callbacks functions provided by the application.
+callback functions provided by the application.
 This field is not used by the libar2 library.
 .TP
 .B ctx->autoerase_message
 Whether
 .I msg
 shall be erased when the function no
-longer needs it. (High recommended for if
+longer needs it. (Highly recommended if
 .I msg
 is a password that is only hashed once.)
 Note that there is no guarantee that
 .I msg
-is erased if the function fails
+is erased if the function fails.
 .TP
-.B ctx->autoerase_secret.
+.B ctx->autoerase_secret
 Whether
 .I params->key
 shall be erased when the function no
@@ -243,15 +243,17 @@ The function shall allocate
 .I num
 times
 .I size
-bytes allocated to a multiple of
+bytes aligned to a multiple of
 .I alignment
 bytes, and return a pointer to the allocated
 memory; or return
 .I NULL
 on failure. The
 .I ctx
-parameter will be set to struct containing
-the function pointer. It is guaranteed that
+parameter will be set to the
+.B struct
+containing the function pointer.
+It is guaranteed that
 .IR num ,
 .IR size ,
 and
@@ -277,15 +279,15 @@ and to be allocated using
 .IR *ctx->allocate .
 The
 .I ctx
-parameter will be set to struct containing
-the function pointer.
+parameter will be set to the
+.B struct
+containing the function pointer.
 
 .B NB!
 The
 .BR libar2_hash ()
 function will not write over memory before
-it deallocates it. This can be done function
-within
+it deallocates it. This can be done within
 .IR *ctx->allocate
 using the
 .BR libar2_erase (3)
@@ -304,17 +306,18 @@ will be set to the maximum number of threads the
 function will be using, meaning that the thread
 pool need not contain more than this number of
 threads, but may contain less if it is deemed
-desirable. the
+desirable. The
 .BR libar2_hash ()
-function will not determine what is optimial,
-this is left up to the application to dermine.
+function will not determine what is optimal,
+this is left up to the application to determine.
 The number of created threads shall be stored in
 .IR *createdp .
 The
 .I ctx
-parameter will be set to struct containing
-the function pointer. The function shall return
-0 on success, and -1 on failure.
+parameter will be set to
+.B struct
+containing the function pointer. The function
+shall return 0 on success, and -1 on failure.
 If the function stores 0 in
 .IR *createdp ,
 .IR ctx->get_ready_threads ,
@@ -322,84 +325,90 @@ If the function stores 0 in
 .IR ctx->join_thread_pool ,
 and
 .IR ctx->destroy_thread_pool
-need note be set.
+need not be set.
 .TP
 .B ctx->get_ready_threads
 Pointer to a function that waits until at least one
 thread in the thread pool is ready (may be immediately),
 and stores up to
 .I n
-of their indices (the first thread have index 0) in
+of their indices (the first thread has index 0) in
 .IR indices .
 The function shall return the number of ready threads.
 It is permissible to return a lesser number as long
 as the returned number is positive and does not exceed
-that number of indices stored in
+the number of indices stored in
 .IR indices .
 On failure the function shall return 0. The
 .I ctx
-parameter will be set to struct containing
-the function pointer.
+parameter will be set to the
+.B struct
+containing the function pointer.
 .TP
 .B ctx->run_thread
-Pointer to a function that makes a thread on the
+Pointer to a function that makes a thread in the
 thread pool run the function provided in
 .I function
 with the argument provided in
 .IR data .
 .I index
 will be the index of the thread (the first thread
-have index 0) that shall run the function. It will
+has index 0) that shall run the function. It will
 be guaranteed by
 .I *ctx->get_ready_threads
 that the thread is resting. The
 .I ctx
-parameter will be set to struct containing
-the function pointer.
+parameter will be set to the
+.B struct
+containing the function pointer.
 .TP
 .B ctx->join_thread_pool
 Pointer to a function that waits until all
 threads in the thread pool are resting. The
 .I ctx
-parameter will be set to struct containing
-the function pointer. The function shall return
-0 on successful completion and -1 on failure.
+parameter will be set to the
+.B struct
+containing the function pointer. The function
+shall return 0 on successful completion and
+-1 on failure.
 .TP
 .B ctx->destroy_thread_pool
 Pointer to a function that destroys the
 thread pool, and all threads in it. The
 .I ctx
-parameter will be set to struct containing the
+parameter will be set to the
+.B struct
+containing the
 function pointer, and it will be guaranteed
 that all threads in the thread pool are resting.
 It is guaranteed that the function is called
 if and only if
-.I *ctx->init_thread_poolw
-return 0 and stored a non-0 number in its
+.I *ctx->init_thread_pool
+returned 0 and stored a non-0 number in its
 .IR *createdp ,
 except if
 .I *ctx->join_thread_pool
 or
-.I *ctx->.get_ready_threads
+.I *ctx->get_ready_threads
 failed.
 .PP
 It is safe to assume that
 .I *ctx->allocate
 and
 .I *ctx->deallocate
-are called in stack order and are never
+are called in stack-order and are never
 called from code called using
 .IR *ctx->run_thread ,
 that is, only one thread will be calling
-it from inside the
+them from inside the
 .BR libar2_hash ()
 function.
 .PP
 If thread support is desired, but the application
-do not want to keep track of the threads using a
-thread pool, The
+does not want to keep track of the threads using a
+thread pool, the
 .I *ctx->init_thread_pool
-function must store the provided in its
+function must store the value provided in its
 .I desired
 parameter to its memory location provided in its
 .I createdp
@@ -422,17 +431,17 @@ calculate it with
 Alternatively, and more preferably, this scheme
 can be used, but adapted to limit the number of
 concurrent threads, keeping track of the number
-of running threads, and not let the
+of running threads, and not letting the
 .I *ctx->get_ready_threads
 function return before this number is small
 enough; the value stored in
 .I *createdp
-must however still set to the value provided
+must however still be set to the value provided
 to the
 .I *ctx->init_thread_pool
 function in its
 .I desired
-parametr, so that to threads are not running
+parameter, so that two threads are not running
 concurrently with the same memory segment as the
 provided argument for the function to run, as
 this could be a source of memory corruption. It
@@ -445,8 +454,8 @@ times.
 .SH RETURN VALUES
 The
 .BR libar2_hash ()
-returns 0 and stores the binary hash of the
-message in
+function returns 0 and stores the binary hash
+of the message in
 .I hash
 upon successful completion. On error -1
 is returned and
@@ -469,7 +478,7 @@ is too large.
 .PP
 The
 .BR libar2_hash ()
-function will also fail if the any
+function will also fail if any
 function provided via
 .I ctx
 fails, and will, in that case, not modify

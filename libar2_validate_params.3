@@ -63,7 +63,7 @@ The
 function checks that the hashing parameters
 provided in the
 .I params
-parameters are valid and can be used for
+parameter are valid and can be used for
 hashing by the libar2 library. An error
 description will be stored in
 .I *errmsgp
@@ -95,8 +95,8 @@ is
 .IR NULL )
 if the input is valid. If the input is
 invalid, an error code (with a positive
-value) will returned and description of
-what is incorrect is stored in
+value) will be returned and a description
+of what is incorrect is stored in
 .I *errmsgp
 (unless
 .I errmsgp
@@ -104,7 +104,7 @@ is
 .IR NULL ).
 The return values that indicate invalid
 input, in the current version of the
-function are:
+function, are:
 .TP
 .B LIBAR2_T_COST_TOO_SMALL
 The time-cost parameter is too small.
@@ -122,7 +122,7 @@ The memory-cost parameter is too large.
 The lane-count parameter is too small.
 .TP
 .B LIBAR2_TOO_MANY_LANES
-The lane-count parameter is too large
+The lane-count parameter is too large.
 .TP
 .B LIBAR2_SALT_TOO_SMALL
 The salt parameter is too small.

@@ -40,8 +40,8 @@ struct libar2_context {
     void (*\fIdeallocate\fP)(void *\fIptr\fP, struct libar2_context *\fIctx\fP);
 };
 
-size_t libar2_decode_params(const char *\fIstr\fP, const struct libar2_argon2_parameters *\fIparams\fP,
-                            char **\fIbuf\fP, struct libar2_context *\fIctx\fP);
+size_t libar2_decode_params(const char *\fIstr\fP, struct libar2_argon2_parameters *\fIparams\fP,
+                            char **\fIbufp\fP, struct libar2_context *\fIctx\fP);
 .fi
 .PP
 Link with
@@ -98,7 +98,7 @@ once, and on failure if
 was called,
 .I *ctx->deallocate
 once. If
-.I *ctx->allocatew
+.I *ctx->allocate
 was called, but not
 .IR *ctx->deallocate ,
 the memory allocated with
@@ -109,8 +109,8 @@ and may be deallocated by the user with
 .I *ctx->deallocate
 once the result stored in
 .I params
-is not longer needed.
-See more information about
+is no longer needed.
+For more information about
 .I ctx->allocate
 and
 .IR ctx->deallocate ,
@@ -124,7 +124,7 @@ None of the arguments may be
 .PP
 Upon successful completion, if
 .I str
-contains the a tag,
+contains a tag,
 .IR &str[n] ,
 where
 .I n
@@ -136,7 +136,7 @@ The
 .BR libar2_decode_params ()
 returns the number of bytes in
 .I str
-that make up the decoded parameter, including
+that make up the decoded parameters, including
 the final dollar-sign
 .RB ( $ ),
 but excluding the tag, if any, at the end of
@@ -145,9 +145,9 @@ and stores the decoded parameters in
 .IR params ,
 and potentially dynamically allocated data in
 .IR *bufp ,
-upon successful completion
+upon successful completion.
 On error, 0 is returned (not a valid return
-value on success completion) and
+value on successful completion) and
 .I errno
 is set to describe the error.
 
@@ -178,7 +178,7 @@ not modify
 
 .SH NOTES
 The encoded parameters will not be
-validate by the
+validated by the
 .BR libar2_decode_params ()
 function beyond what is needed to ensure that
 the parameters can be accurately parsed and
