@@ -100,7 +100,7 @@ blockxor3_avx2(struct block *a_, const struct block *b_, const struct block *c_)
 
 }
 
-/* $covered{$ (removing from coverage test because my machine does not spport AVX512F) */
+/* $covered{$ (removing from coverage test because my machine does not support AVX512F) */
 LIBAR2_TARGET__("avx512f")
 static void
 blockxor3_avx512f(struct block *a_, const struct block *b_, const struct block *c_)
