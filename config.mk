@@ -12,3 +12,5 @@ GCC_SANITIZE    = -O1 $(COMMON_SANITIZE)
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700 -D_GNU_SOURCE
 CFLAGS   = $(SANITIZE) -std=c11 -Wall -O3
 LDFLAGS  = $(SANITIZE) -lblake -s
+
+# For libblake>3.0.2, libblake must have been built with SUPPORT_BLAKE2B
